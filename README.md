@@ -1,8 +1,7 @@
-🃏 Proxyx
 
 <div align="center">
 
-⚡ Proxyx - Fast TCG Proxy Generator
+# ⚡ Proxyx - Fast TCG Proxy Generator
 
 Generate printable TCG proxy sheets in seconds.
 
@@ -27,9 +26,8 @@ Generate printable TCG proxy sheets in seconds.
 </p>
 </div>
 
-⸻
 
-✨ Overview
+## ✨ Overview
 
 Proxyx is a desktop application built to quickly generate high-quality printable proxy sheets for TCG cards.
 
@@ -39,9 +37,8 @@ It was designed to solve a simple problem:
 
 “I just want to print proxies fast without manually editing templates for hours.”
 
-⸻
 
-🚀 Features
+## 🚀 Features
 
 ✅ Modern desktop UI
 <br>
@@ -61,41 +58,34 @@ It was designed to solve a simple problem:
 <br>
 ✅ Built with scalability in mind
 
-⸻
 
-📸 Screenshots
+## 📸 Screenshots
 
-Main Interface:
+### Main Interface:
 
 <p align="center">
   <img src="assets/proxyx-screenshot.png" width="60%" />
 </p>
 
-⸻
-
-Generated Printable Layout:
+### Generated Printable Layout:
 
 <p align="center">
   <img src="assets/printable-layout-generated-screenshot.png" width="60%" />
 </p>
 
-⸻
 
-⬇ Download
+## ⬇ Download
 
-Latest Release
-
-👉 Landing Page:
+### 👉 Landing Page:
 
 https://elianAlde.github.io/proxyx/
 
-👉 Direct Download:
+### 👉 Direct Download:
 
 https://elianAlde.github.io/proxyx/downloads/proxyx-exe.zip
 
-⸻
 
-🧠 Why This Project Exists
+## 🧠 Why This Project Exists
 
 Most TCG proxy workflows are:
 
@@ -115,9 +105,8 @@ This project focuses on:
 
 The goal is to make proxy generation feel like a real polished desktop tool instead of a collection of scripts.
 
-⸻
 
-🛠 Tech Stack
+## 🛠 Tech Stack
 
 Technology	Purpose
 Python	Core application logic
@@ -126,9 +115,8 @@ Pillow (PIL)	Image processing
 ReportLab / PDF tools	Printable export generation
 PyInstaller	Standalone executable packaging
 
-⸻
 
-⚙ Installation
+## ⚙ Installation
 
 Run from source
 
@@ -137,23 +125,8 @@ cd proxyx
 pip install -r requirements.txt
 python main.py
 
-⸻
 
-📁 Project Structure
-
-proxyx/
-│
-├── assets/
-├── config.py
-├── generator.py
-├── gui.py
-├── main.py
-├── requirements.txt
-└── README.md
-
-⸻
-
-🖨 Printing Notes
+## 🖨 Printing Notes
 
 Recommended settings:
 
@@ -168,30 +141,29 @@ Best results are usually obtained with:
 * 300 DPI images
 * corner cutter for finishing
 
-⸻
 
-🛣 Roadmap
+## 🛣 Roadmap
 
-Planned Features
+### Upcoming Features
 
-🔎 Scryfall Integration or others DB online cards
+- [ ] 🔎 **Scryfall Integration (and other card databases)**
+  - Search and import cards directly from the application
+  - Official Scryfall API support
+  - Additional database providers
 
-Search and import cards directly from the app using the official Scryfall API.
+- [ ] 🖨 **Advanced Print Controls**
+  - Bleed margins
+  - Crop marks
+  - Printer calibration
+  - DPI controls
 
-🖨 Advanced Print Controls
+- [ ] 📱 **Companion Mobile App**
+  - Mobile-friendly proxy list management
+  - Quick deck preparation
+  - Synchronization with the desktop application
 
-* bleed margins
-* crop marks
-* printer calibration
-* DPI controls
 
-📱 Companion Mobile Version
-
-A lightweight mobile companion app for quick preparation.
-
-⸻
-
-📚 Technical Details
+## 📚 Technical Details
 
 Proxy Layout Engine
 
@@ -205,9 +177,8 @@ The generator automatically:
 
 The current layout system is optimized around standard TCG card proportions.
 
-⸻
 
-🤝 Contributing
+## 🤝 Contributing
 
 Contributions, suggestions and feature requests are welcome.
 
@@ -218,15 +189,13 @@ If you’d like to contribute:
 3. Commit your changes
 4. Open a pull request
 
-⸻
 
-📜 License
+## 📜 License
 
 Distributed under the MIT License.
 
-⸻
 
-⭐ Support The Project
+## ⭐ Support The Project
 
 If you like this project:
 
@@ -236,8 +205,8 @@ If you like this project:
 
 It really helps.
 
-⸻
 
+---
 <div align="center">
 
 Built with ❤️ for the TCG community
