@@ -42,8 +42,6 @@ It was designed to solve a simple problem:
 
 ✅ Modern desktop UI
 <br>
-✅ Drag & drop image support
-<br>
 ✅ Multi-card preview grid
 <br>
 ✅ Automatic printable page layout
