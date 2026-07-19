@@ -74,14 +74,7 @@ It was designed to solve a simple problem:
 
 ## ⬇ Download
 
-### 👉 Landing Page:
-
-https://elianAlde.github.io/proxyx/
-
-### 👉 Direct Download:
-
-* macOS: https://github.com/elianAlde/proxyx/releases/latest/download/Proxyx-macOS.zip
-* Windows: https://github.com/elianAlde/proxyx/releases/latest/download/Proxyx-Windows.zip
+No prebuilt executables are distributed. See [Installation](#-installation) below to run it from source.
 
 
 ## 🧠 Why This Project Exists

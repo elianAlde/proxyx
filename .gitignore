@@ -19,3 +19,6 @@ build/
 
 # Environment
 .env
+
+# Landing page (kept local only, not published)
+index.html
