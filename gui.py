@@ -1,15 +1,20 @@
 # gui.py
 
+import io
 import os
+import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
+import requests
 
 from PIL import Image, ImageTk
 
 from config import *
 from generator import ProxyGenerator
+from scryfall import HEADERS as SCRYFALL_HEADERS
+from scryfall import download_card_image, get_image_url, get_prints, search_cards
 
 # =========================================================
 # THEME
@@ -123,7 +128,8 @@ class ProxyApp:
             width=220,
             height=40,
             font=("Segoe UI", 14),
-            dropdown_font=("Segoe UI", 13)
+            dropdown_font=("Segoe UI", 13),
+            command=self.on_card_type_change
         )
 
         self.card_type.set("Magic")
@@ -137,8 +143,15 @@ class ProxyApp:
         # BUTTONS
         # -------------------------------------------------
 
-        load_btn = ctk.CTkButton(
+        button_group = ctk.CTkFrame(
             left,
+            fg_color="transparent"
+        )
+
+        button_group.pack(fill="x")
+
+        load_btn = ctk.CTkButton(
+            button_group,
             text="Load Images",
             command=self.load_files,
             height=45,
@@ -146,6 +159,22 @@ class ProxyApp:
         )
 
         load_btn.pack(
+            fill="x",
+            padx=20,
+            pady=(0, 15)
+        )
+
+        self.scryfall_btn = ctk.CTkButton(
+            button_group,
+            text="🔎 Search Scryfall",
+            command=self.open_scryfall_search,
+            height=45,
+            font=("Segoe UI", 15, "bold"),
+            fg_color="#7c3aed",
+            hover_color="#6d28d9"
+        )
+
+        self.scryfall_btn.pack(
             fill="x",
             padx=20,
             pady=(0, 15)
@@ -313,6 +342,24 @@ class ProxyApp:
         self.add_files(files)
 
     # =====================================================
+    # CARD TYPE CHANGE
+    # =====================================================
+
+    def on_card_type_change(self, choice):
+
+        if choice == "Magic":
+
+            self.scryfall_btn.pack(
+                fill="x",
+                padx=20,
+                pady=(0, 15)
+            )
+
+        else:
+
+            self.scryfall_btn.pack_forget()
+
+    # =====================================================
     # ADD FILES
     # =====================================================
 
@@ -325,6 +372,457 @@ class ProxyApp:
         self.preview_images.clear()
 
         self.refresh_preview()
+
+    # =====================================================
+    # SCRYFALL SEARCH
+    # =====================================================
+
+    def open_scryfall_search(self):
+
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Search Scryfall")
+        dialog.geometry("700x600")
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        search_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+
+        search_frame.pack(
+            fill="x",
+            padx=20,
+            pady=20
+        )
+
+        search_entry = ctk.CTkEntry(
+            search_frame,
+            placeholder_text="Card name (e.g. Lightning Bolt)",
+            height=40,
+            font=("Segoe UI", 14)
+        )
+
+        search_entry.pack(
+            side="left",
+            fill="x",
+            expand=True,
+            padx=(0, 10)
+        )
+
+        search_entry.focus()
+
+        search_hint = ctk.CTkLabel(
+            dialog,
+            text=(
+                "Search by English card name"
+            ),
+            font=("Segoe UI", 11),
+            text_color="gray"
+        )
+
+        search_hint.pack(
+            anchor="w",
+            padx=20,
+            pady=(0, 10)
+        )
+
+        results_frame = ctk.CTkScrollableFrame(dialog, corner_radius=10)
+
+        results_frame.pack(
+            fill="both",
+            expand=True,
+            padx=20,
+            pady=(0, 10)
+        )
+
+        status_label = ctk.CTkLabel(
+            dialog,
+            text="",
+            font=("Segoe UI", 13),
+            text_color="gray"
+        )
+
+        status_label.pack(pady=(0, 15))
+
+        thumbnails = []
+
+        def load_thumbnail(card, label_widget, delay=0.0):
+
+            def worker():
+
+                if delay:
+                    threading.Event().wait(delay)
+
+                try:
+                    url = get_image_url(card, version="small")
+
+                    if not url:
+                        return
+
+                    response = requests.get(
+                        url,
+                        headers={"User-Agent": SCRYFALL_HEADERS["User-Agent"]},
+                        timeout=10
+                    )
+                    response.raise_for_status()
+
+                    img = Image.open(io.BytesIO(response.content))
+                    img.thumbnail((140, 195))
+
+                    photo = ImageTk.PhotoImage(img)
+
+                except Exception:
+                    return
+
+                def on_done():
+                    thumbnails.append(photo)
+                    label_widget.configure(image=photo, text="")
+
+                self.root.after(0, on_done)
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        def add_card(card):
+
+            status_label.configure(text=f"Downloading {card.get('name', 'card')}...")
+
+            def worker():
+
+                try:
+                    path = download_card_image(card)
+                    error = None
+
+                except Exception as e:
+                    path = None
+                    error = str(e)
+
+                def on_done():
+
+                    if path:
+                        self.add_files([path])
+                        status_label.configure(text=f"Added: {card.get('name', 'card')}")
+
+                    else:
+                        status_label.configure(text=f"Error: {error}")
+
+                self.root.after(0, on_done)
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        def populate_results(cards):
+
+            for widget in results_frame.winfo_children():
+                widget.destroy()
+
+            thumbnails.clear()
+
+            row = 0
+            col = 0
+
+            for i, card in enumerate(cards):
+
+                card_frame = ctk.CTkFrame(results_frame, corner_radius=12)
+
+                card_frame.grid(
+                    row=row,
+                    column=col,
+                    padx=10,
+                    pady=10,
+                    sticky="n"
+                )
+
+                thumb_label = ctk.CTkLabel(
+                    card_frame,
+                    text="...",
+                    width=140,
+                    height=195
+                )
+
+                thumb_label.pack(padx=10, pady=(10, 5))
+
+                name_label = ctk.CTkLabel(
+                    card_frame,
+                    text=card.get("name", "Unknown"),
+                    font=("Segoe UI", 12, "bold"),
+                    wraplength=160
+                )
+
+                name_label.pack(padx=10)
+
+                set_label = ctk.CTkLabel(
+                    card_frame,
+                    text=card.get("set_name", ""),
+                    font=("Segoe UI", 11),
+                    text_color="gray",
+                    wraplength=160
+                )
+
+                set_label.pack(padx=10, pady=(0, 5))
+
+                btn_row = ctk.CTkFrame(card_frame, fg_color="transparent")
+
+                btn_row.pack(padx=10, pady=(0, 10))
+
+                add_btn = ctk.CTkButton(
+                    btn_row,
+                    text="+ Add",
+                    width=90,
+                    command=lambda c=card: add_card(c)
+                )
+
+                add_btn.pack(side="left", padx=(0, 5))
+
+                versions_btn = ctk.CTkButton(
+                    btn_row,
+                    text="Versions",
+                    width=45,
+                    fg_color="transparent",
+                    border_width=1,
+                    command=lambda c=card: self.open_version_picker(c)
+                )
+
+                versions_btn.pack(side="left")
+
+                load_thumbnail(card, thumb_label, delay=i * 0.05)
+
+                col += 1
+
+                if col >= 3:
+                    col = 0
+                    row += 1
+
+        def run_search(event=None):
+
+            query = search_entry.get().strip()
+
+            if not query:
+                return
+
+            for widget in results_frame.winfo_children():
+                widget.destroy()
+
+            status_label.configure(text="Searching...")
+
+            def worker():
+
+                try:
+                    cards = search_cards(query)
+                    error = None
+
+                except Exception as e:
+                    cards = None
+                    error = str(e)
+
+                def on_done():
+
+                    if cards is None:
+                        status_label.configure(text=f"Error: {error}")
+                        return
+
+                    if not cards:
+                        status_label.configure(text="No cards found.")
+                        return
+
+                    status_label.configure(text=f"{len(cards)} result(s)")
+                    populate_results(cards)
+
+                self.root.after(0, on_done)
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        search_btn = ctk.CTkButton(
+            search_frame,
+            text="Search",
+            width=100,
+            command=run_search
+        )
+
+        search_btn.pack(side="left")
+
+        search_entry.bind("<Return>", run_search)
+
+    # =====================================================
+    # SCRYFALL VERSION PICKER
+    # =====================================================
+
+    def open_version_picker(self, card):
+
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title(f"Versions - {card.get('name', 'Card')}")
+        dialog.geometry("700x600")
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        status_label = ctk.CTkLabel(
+            dialog,
+            text="Loading printings...",
+            font=("Segoe UI", 13),
+            text_color="gray"
+        )
+
+        status_label.pack(pady=15)
+
+        results_frame = ctk.CTkScrollableFrame(dialog, corner_radius=10)
+
+        results_frame.pack(
+            fill="both",
+            expand=True,
+            padx=20,
+            pady=(0, 20)
+        )
+
+        thumbnails = []
+
+        def load_thumbnail(print_card, label_widget, delay=0.0):
+
+            def worker():
+
+                if delay:
+                    threading.Event().wait(delay)
+
+                try:
+                    url = get_image_url(print_card, version="small")
+
+                    if not url:
+                        return
+
+                    response = requests.get(
+                        url,
+                        headers={"User-Agent": SCRYFALL_HEADERS["User-Agent"]},
+                        timeout=10
+                    )
+                    response.raise_for_status()
+
+                    img = Image.open(io.BytesIO(response.content))
+                    img.thumbnail((140, 195))
+
+                    photo = ImageTk.PhotoImage(img)
+
+                except Exception:
+                    return
+
+                def on_done():
+                    thumbnails.append(photo)
+                    label_widget.configure(image=photo, text="")
+
+                self.root.after(0, on_done)
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        def add_print(print_card):
+
+            status_label.configure(text=f"Downloading {print_card.get('set_name', 'card')}...")
+
+            def worker():
+
+                try:
+                    path = download_card_image(print_card)
+                    error = None
+
+                except Exception as e:
+                    path = None
+                    error = str(e)
+
+                def on_done():
+
+                    if path:
+                        self.add_files([path])
+                        status_label.configure(text=f"Added: {print_card.get('name')} ({print_card.get('set_name')})")
+
+                    else:
+                        status_label.configure(text=f"Error: {error}")
+
+                self.root.after(0, on_done)
+
+            threading.Thread(target=worker, daemon=True).start()
+
+        def populate_prints(prints):
+
+            for widget in results_frame.winfo_children():
+                widget.destroy()
+
+            thumbnails.clear()
+
+            row = 0
+            col = 0
+
+            for i, print_card in enumerate(prints):
+
+                card_frame = ctk.CTkFrame(results_frame, corner_radius=12)
+
+                card_frame.grid(
+                    row=row,
+                    column=col,
+                    padx=10,
+                    pady=10,
+                    sticky="n"
+                )
+
+                thumb_label = ctk.CTkLabel(
+                    card_frame,
+                    text="...",
+                    width=140,
+                    height=195
+                )
+
+                thumb_label.pack(padx=10, pady=(10, 5))
+
+                set_label = ctk.CTkLabel(
+                    card_frame,
+                    text=print_card.get("set_name", ""),
+                    font=("Segoe UI", 12, "bold"),
+                    wraplength=160
+                )
+
+                set_label.pack(padx=10)
+
+                info_label = ctk.CTkLabel(
+                    card_frame,
+                    text=f"#{print_card.get('collector_number', '?')} · {print_card.get('released_at', '')}",
+                    font=("Segoe UI", 11),
+                    text_color="gray",
+                    wraplength=160
+                )
+
+                info_label.pack(padx=10, pady=(0, 5))
+
+                add_btn = ctk.CTkButton(
+                    card_frame,
+                    text="+ Add",
+                    width=140,
+                    command=lambda c=print_card: add_print(c)
+                )
+
+                add_btn.pack(padx=10, pady=(0, 10))
+
+                load_thumbnail(print_card, thumb_label, delay=i * 0.05)
+
+                col += 1
+
+                if col >= 3:
+                    col = 0
+                    row += 1
+
+        def worker():
+
+            try:
+                prints = get_prints(card)
+                error = None
+
+            except Exception as e:
+                prints = None
+                error = str(e)
+
+            def on_done():
+
+                if prints is None:
+                    status_label.configure(text=f"Error: {error}")
+                    return
+
+                status_label.configure(text=f"{len(prints)} printing(s) — pick one to add")
+                populate_prints(prints)
+
+            self.root.after(0, on_done)
+
+        threading.Thread(target=worker, daemon=True).start()
 
     # =====================================================
     # REFRESH PREVIEW

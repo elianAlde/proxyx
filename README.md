@@ -82,7 +82,8 @@ https://elianAlde.github.io/proxyx/
 
 ### 👉 Direct Download:
 
-https://elianAlde.github.io/proxyx/downloads/proxyx-exe.zip
+* macOS: https://github.com/elianAlde/proxyx/releases/latest/download/Proxyx-macOS.zip
+* Windows: https://github.com/elianAlde/proxyx/releases/latest/download/Proxyx-Windows.zip
 
 
 ## 🧠 Why This Project Exists
@@ -146,10 +147,11 @@ Best results are usually obtained with:
 
 ### Upcoming Features
 
-- [ ] 🔎 **Scryfall Integration (and other card databases)**
-  - Search and import cards directly from the application
+- [x] 🔎 **Scryfall Integration**
+  - Search and import Magic cards directly from the application
   - Official Scryfall API support
-  - Additional database providers
+- [ ] 🔎 **Additional card databases**
+  - Pokémon and Yu-Gi-Oh! still use manual image loading
 
 - [ ] 🖨 **Advanced Print Controls**
   - Bleed margins
