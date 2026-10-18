@@ -59,32 +59,49 @@ Il programma dispone automaticamente le carte su pagine stampabili, mostra un'an
 </p>
 
 
-## ⚙ Installazione
+## ⬇ Installazione
 
-Serve Python 3.10 o superiore. Dalla radice della repository:
+Non ci sono eseguibili precompilati: Proxyx si avvia dal codice sorgente. Ti servono [Python 3.10+](https://www.python.org/downloads/) e [Git](https://git-scm.com/downloads).
+
+**1. Scarica il progetto**
+
+```bash
+git clone https://github.com/elianAlde/proxyx.git
+cd proxyx
+```
+
+**2. Crea un ambiente virtuale e installa Proxyx**
+
+macOS / Linux:
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate          # macOS / Linux  (Windows: venv\Scripts\activate)
-pip install -e ".[dev]"           # progetto + dipendenze + pytest
+source venv/bin/activate
+pip install -e .
 ```
 
-Con `-e` (editable) le modifiche in `src/` hanno effetto subito: si reinstalla solo quando cambia `pyproject.toml`.
+Windows (PowerShell):
 
-## ▶ Avvio
+```powershell
+python -m venv venv
+venv\Scripts\activate
+pip install -e .
+```
+
+**3. Avvia l'app**
 
 ```bash
-proxyx                            # oppure: python -m proxyx
-proxyx --settings altro.json      # usa un file di configurazione diverso
+proxyx
 ```
 
-## 🧪 Test
+Le volte successive basta entrare nella cartella, riattivare l'ambiente (`source venv/bin/activate`, oppure `venv\Scripts\activate` su Windows) e lanciare `proxyx`.
 
-```bash
-pytest
-```
+## 🃏 Come si usa
 
-I test coprono le funzioni pure (conversioni mm → pixel, impaginazione, parsing delle risposte Scryfall, caricamento della configurazione). GUI e chiamate di rete non vengono testate.
+1. In **Card Type** scegli il formato delle carte (Pokémon, Magic, Yu-Gi-Oh!)
+2. Aggiungi le carte con **Load Images**, oppure cerca le carte Magic con **🔎 Search Scryfall**
+3. Scorri l'anteprima delle pagine con **← Previous** / **Next →**
+4. Premi **Generate PDF** e stampa il file
 
 ## 🔧 Configurazione (`settings.json`)
 
@@ -106,12 +123,20 @@ Un campo che manca prende il valore di default. Le immagini scaricate da Scryfal
 
 ## 🩺 Problemi tipici
 
-| Sintomo | Causa |
+| Problema | Soluzione |
 |---|---|
-| `ModuleNotFoundError: No module named 'proxyx'` o `command not found: proxyx` | Il venv non è attivo (il prompt deve mostrare `(venv)`), oppure manca `pip install -e .` |
-| `ImportError: attempted relative import with no known parent package` | `main.py` è stato lanciato come file (es. "Run Python File" di VS Code). Avvia con `proxyx` o `python -m proxyx`; nel debugger usa `"module": "proxyx"` |
-| Pylance segna gli import come "could not be resolved" | In VS Code non è selezionato l'interprete `venv/bin/python` (`Cmd+Shift+P` → *Python: Select Interpreter*) |
-| `No module named '_tkinter'` | Il Python installato non include Tk (es. Homebrew: `brew install python-tk`) |
+| `command not found: proxyx` | L'ambiente virtuale non è attivo: lancia `source venv/bin/activate` (Windows: `venv\Scripts\activate`) dalla cartella `proxyx` |
+| `No module named '_tkinter'` | Il tuo Python non include Tk. Su macOS con Homebrew: `brew install python-tk` |
+| Le carte stampate hanno la misura sbagliata | Nella finestra di stampa imposta la scala al 100% e disattiva "adatta alla pagina" |
+
+## 🧑‍💻 Sviluppo
+
+Per lanciare i test installa anche le dipendenze di sviluppo:
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
 
 
 ## 🛠 Tecnologie
