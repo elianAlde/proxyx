@@ -3,205 +3,113 @@
 
 # ⚡ Proxyx - Fast TCG Proxy Generator
 
-Generate printable TCG proxy sheets in seconds.
+Genera fogli di proxy TCG stampabili in pochi secondi.
 
 <p align="center">
-  <a href="#"><img src="https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python" /></a>
   <a href="#"><img src="https://img.shields.io/badge/CustomTkinter-UI-1f6feb?style=for-the-badge" /></a>
   <a href="#"><img src="https://img.shields.io/badge/PDF-Generation-red?style=for-the-badge&logo=adobeacrobatreader" /></a>
   <a href="#"><img src="https://img.shields.io/badge/Status-Active-success?style=for-the-badge" /></a>
   <a href="#"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" /></a>
 </p>
 
-<p align="center">
-  <a href="#download">⬇ Download</a>
-  ·
-  <a href="#features">✨ Features</a>
-  ·
-  <a href="#screenshots">📸 Screenshots</a>
-  ·
-  <a href="#roadmap">🛣 Roadmap</a>
-  ·
-  <a href="#technical-details">⚙ Technical Details</a>
-</p>
 </div>
 
 
-## ✨ Overview
+## ✨ Panoramica
 
-Proxyx is a desktop application built to quickly generate high-quality printable proxy sheets for TCG cards.
+Proxyx è un'applicazione desktop per generare velocemente fogli di proxy TCG pronti da stampare.
 
-The tool automatically arranges cards into optimized printable pages, supports preview navigation, and exports everything into clean PDF-ready layouts.
+Il programma dispone automaticamente le carte su pagine stampabili, mostra un'anteprima con paginazione ed esporta tutto in PDF.
 
-It was designed to solve a simple problem:
+È nato per risolvere un problema semplice:
 
-“I just want to print proxies fast without manually editing templates for hours.”
+"Voglio solo stampare dei proxy in fretta, senza passare ore a modificare template a mano."
 
 
-## 🚀 Features
+## 🚀 Funzionalità
 
-✅ Modern desktop UI
+✅ Interfaccia desktop moderna
 <br>
-✅ Multi-card preview grid
+✅ Anteprima a griglia di più carte
 <br>
-✅ Automatic printable page layout
+✅ Impaginazione automatica
 <br>
-✅ Pagination system for large batches
+✅ Paginazione per lotti grandi
 <br>
-✅ PDF export ready for printing
+✅ Esportazione PDF pronta per la stampa
 <br>
-✅ Lightweight and fast
+✅ Ricerca delle carte Magic tramite Scryfall
 <br>
-✅ Local-first (no external services required)
-<br>
-✅ Built with scalability in mind
+✅ Formati, griglia e DPI configurabili da `settings.json`
 
 
-## 📸 Screenshots
+## 📸 Screenshot
 
-### Main Interface:
+### Interfaccia principale:
 
 <p align="center">
   <img src="assets/proxyx-screenshot.png" width="60%" />
 </p>
 
-### Generated Printable Layout:
+### Layout stampabile generato:
 
 <p align="center">
   <img src="assets/printable-layout-generated-screenshot.png" width="60%" />
 </p>
 
 
-## ⬇ Download
+## 📁 Struttura della repository
 
-No prebuilt executables are distributed. See [Installation](#-installation) below to run it from source.
+```
+proxyx/                 # repository
+├── README.md           # questa panoramica + roadmap
+├── assets/             # screenshot usati nei README
+└── proxyx/             # l'applicazione desktop (package Python)
+    └── README.md       # installazione, avvio, configurazione
+```
 
-
-## 🧠 Why This Project Exists
-
-Most TCG proxy workflows are:
-
-* slow
-* manual
-* cluttered
-* web-based
-* annoying for bulk printing
-
-This project focuses on:
-
-* speed
-* usability
-* clean print layouts
-* local processing
-* minimal setup
-
-The goal is to make proxy generation feel like a real polished desktop tool instead of a collection of scripts.
+Per installare e avviare l'app: **[proxyx/README.md](proxyx/README.md)**.
 
 
-## 🛠 Tech Stack
+## 🛠 Tecnologie
 
-Technology	Purpose
-Python	Core application logic
-CustomTkinter	Modern desktop interface
-Pillow (PIL)	Image processing
-ReportLab / PDF tools	Printable export generation
-PyInstaller	Standalone executable packaging
-
-
-## ⚙ Installation
-
-Run from source
-
-git clone https://github.com/elianAlde/proxyx.git
-cd proxyx
-pip install -r requirements.txt
-python main.py
-
-
-## 🖨 Printing Notes
-
-Recommended settings:
-
-* 100% scale
-* No page fitting
-* High quality print
-* Thick paper or photo paper
-
-Best results are usually obtained with:
-
-* matte photo paper
-* 300 DPI images
-* corner cutter for finishing
+| Tecnologia | Uso |
+|---|---|
+| Python | Logica dell'applicazione |
+| CustomTkinter | Interfaccia desktop |
+| Pillow (PIL) | Elaborazione immagini ed export PDF |
+| Requests | API di Scryfall |
 
 
 ## 🛣 Roadmap
 
-### Upcoming Features
-
-- [x] 🔎 **Scryfall Integration**
-  - Search and import Magic cards directly from the application
-  - Official Scryfall API support
-- [ ] 🔎 **Additional card databases**
-  - Pokémon and Yu-Gi-Oh! still use manual image loading
-
-- [ ] 🖨 **Advanced Print Controls**
-  - Bleed margins
-  - Crop marks
-  - Printer calibration
-  - DPI controls
-
-- [ ] 📱 **Companion Mobile App**
-  - Mobile-friendly proxy list management
-  - Quick deck preparation
-  - Synchronization with the desktop application
+- [x] 🔎 **Integrazione Scryfall**
+  - Ricerca e importazione delle carte Magic direttamente dall'app
+- [ ] 🔎 **Altri database di carte**
+  - Pokémon e Yu-Gi-Oh! usano ancora il caricamento manuale delle immagini
+- [ ] 🖨 **Controlli di stampa avanzati**
+  - Margini di abbondanza (bleed)
+  - Segni di taglio
+  - Calibrazione della stampante
+- [ ] 📱 **App mobile di supporto**
+  - Gestione delle liste di proxy da telefono
+  - Sincronizzazione con l'app desktop
 
 
-## 📚 Technical Details
+## 🤝 Contribuire
 
-Proxy Layout Engine
-
-The generator automatically:
-
-* resizes images
-* preserves aspect ratios
-* aligns cards into printable grids
-* paginates dynamically
-* optimizes spacing
-
-The current layout system is optimized around standard TCG card proportions.
+Suggerimenti e richieste di funzionalità sono benvenuti: apri una issue o una pull request.
 
 
-## 🤝 Contributing
+## 📜 Licenza
 
-Contributions, suggestions and feature requests are welcome.
-
-If you’d like to contribute:
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Open a pull request
-
-
-## 📜 License
-
-Distributed under the MIT License.
-
-
-## ⭐ Support The Project
-
-If you like this project:
-
-* leave a star ⭐
-* share it with TCG friends
-* contribute ideas/features
-
-It really helps.
+Distribuito con licenza MIT.
 
 
 ---
 <div align="center">
 
-Built with ❤️ for the TCG community
+Fatto con ❤️ per la community TCG
 
 </div>

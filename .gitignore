@@ -1,24 +1,24 @@
 # Python
 __pycache__/
-*.pyc
-.venv/
-
-# macOS
-.DS_Store
-
-# Build
-dist/
+*.py[cod]
+*.egg-info/
 build/
+dist/
+.pytest_cache/
 *.spec
 
-# Logs
+# Virtualenv
+venv/
+.venv/
+
+# Logs / ambiente
 *.log
-
-# VSCode
-.vscode/
-
-# Environment
 .env
 
-# Landing page (kept local only, not published)
+# Sistema / editor
+.DS_Store
+**/.claude/settings.local.json
+**/.vscode/
+
+# Landing page (solo in locale, non pubblicata)
 index.html

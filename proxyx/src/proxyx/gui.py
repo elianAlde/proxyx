@@ -11,10 +11,10 @@ import requests
 
 from PIL import Image, ImageTk
 
-from config import *
-from generator import ProxyGenerator
-from scryfall import HEADERS as SCRYFALL_HEADERS
-from scryfall import download_card_image, get_image_url, get_prints, search_cards
+from .config import Config
+from .generator import ProxyGenerator
+from .scryfall import HEADERS as SCRYFALL_HEADERS
+from .scryfall import download_card_image, get_image_url, get_prints, search_cards
 
 # =========================================================
 # THEME
@@ -30,7 +30,9 @@ ctk.set_default_color_theme("blue")
 
 class ProxyApp:
 
-    def __init__(self):
+    def __init__(self, config: Config):
+
+        self.config = config
 
         self.root = ctk.CTk()
 
@@ -42,7 +44,7 @@ class ProxyApp:
         self.preview_images = []
 
         self.current_page = 0
-        self.cards_per_page = 9
+        self.cards_per_page = config.cards_per_page
 
         self.setup_ui()
 
@@ -124,7 +126,7 @@ class ProxyApp:
 
         self.card_type = ctk.CTkComboBox(
             left,
-            values=list(CARD_FORMATS.keys()),
+            values=list(self.config.card_formats.keys()),
             width=220,
             height=40,
             font=("Segoe UI", 14),
@@ -223,12 +225,10 @@ class ProxyApp:
             left,
             text=(
                 "Supported:\n"
-                "• Pokémon\n"
-                "• Magic\n"
-                "• Yu-Gi-Oh!\n\n"
-                "Export:\n"
-                "• A4 PDF\n"
-                "• 300 DPI"
+                + "".join(f"• {name}\n" for name in self.config.card_formats)
+                + "\nExport:\n"
+                "• PDF\n"
+                f"• {self.config.dpi} DPI"
             ),
             justify="left",
             font=("Segoe UI", 13)
@@ -975,7 +975,8 @@ class ProxyApp:
             ProxyGenerator.generate_pdf(
                 self.files,
                 self.card_type.get(),
-                output
+                output,
+                self.config
             )
 
             messagebox.showinfo(
