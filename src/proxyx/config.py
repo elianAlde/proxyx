@@ -1,7 +1,7 @@
 # config.py
 
 import json
-from dataclasses import dataclass, fields
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
 # src/proxyx/config.py -> parents[2] è la cartella del componente:
@@ -43,3 +43,11 @@ def load_config(path: Path = DEFAULT_SETTINGS_PATH) -> Config:
     known = {f.name for f in fields(Config)}
 
     return Config(**{k: v for k, v in data.items() if k in known})
+
+
+def save_config(config: Config, path: Path = DEFAULT_SETTINGS_PATH) -> None:
+    """Scrive la configurazione su settings.json."""
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(asdict(config), f, indent=4)
+        f.write("\n")

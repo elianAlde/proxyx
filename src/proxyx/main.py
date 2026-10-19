@@ -26,5 +26,5 @@ def main() -> None:
     # Import qui: customtkinter si carica solo quando serve davvero la GUI
     from .gui import ProxyApp
 
-    app = ProxyApp(config)
+    app = ProxyApp(config, args.settings)
     app.run()

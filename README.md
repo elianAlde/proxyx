@@ -47,25 +47,25 @@ It was built to solve a simple problem: playtesting a deck idea before buying th
 ### Main window
 
 <p align="center">
-  <img src="assets/proxyx-screenshot.png" width="60%" />
+  <img src="assets/proxyx-screenshot.png" width="100%" />
 </p>
 
 ### Scryfall search
 
 <p align="center">
-  <img src="assets/scryfall-search-screenshot.png" width="60%" />
+  <img src="assets/scryfall-search-screenshot.png" width="100%" />
 </p>
 
 ### Choosing a printing
 
 <p align="center">
-  <img src="assets/scryfall-versions-screenshot.png" width="60%" />
+  <img src="assets/scryfall-versions-screenshot.png" width="100%" />
 </p>
 
 ### Generated printable layout
 
 <p align="center">
-  <img src="assets/printable-layout-generated-screenshot.png" width="60%" />
+  <img src="assets/printable-layout-generated-screenshot.png" width="100%" />
 </p>
 
 

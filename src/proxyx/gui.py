@@ -11,7 +11,10 @@ import requests
 
 from PIL import Image, ImageTk
 
-from .config import Config
+from dataclasses import fields
+from pathlib import Path
+
+from .config import DEFAULT_SETTINGS_PATH, Config, save_config
 from .generator import ProxyGenerator
 from .scryfall import HEADERS as SCRYFALL_HEADERS
 from .scryfall import download_card_image, get_image_url, get_prints, search_cards
@@ -30,9 +33,10 @@ ctk.set_default_color_theme("blue")
 
 class ProxyApp:
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, settings_path: Path = DEFAULT_SETTINGS_PATH):
 
         self.config = config
+        self.settings_path = settings_path
 
         self.root = ctk.CTk()
 
@@ -82,7 +86,7 @@ class ProxyApp:
         # MAIN
         # -------------------------------------------------
 
-        main = ctk.CTkFrame(
+        main = self.main_page = ctk.CTkFrame(
             self.root,
             fg_color="transparent"
         )
@@ -192,23 +196,71 @@ class ProxyApp:
         # INFO
         # -------------------------------------------------
 
-        info = ctk.CTkLabel(
+        info = ctk.CTkFrame(
             left,
-            text=(
-                "Format:\n"
-                f"• {self.config.card_width_mm:g} × {self.config.card_height_mm:g} mm\n\n"
-                "Export:\n"
-                "• PDF\n"
-                f"• {self.config.dpi} DPI"
-            ),
-            justify="left",
-            font=("Segoe UI", 13)
+            corner_radius=12,
+            fg_color=("gray85", "gray20")
         )
 
         info.pack(
-            anchor="w",
+            fill="x",
             padx=20,
-            pady=30
+            pady=(30, 0)
+        )
+
+        info_title = ctk.CTkLabel(
+            info,
+            text="OUTPUT",
+            font=("Segoe UI", 11, "bold"),
+            text_color="gray"
+        )
+
+        info_title.pack(anchor="w", padx=15, pady=(12, 4))
+
+        self.info_values = {}
+
+        for key in ("Card", "Page", "Grid", "Export"):
+
+            row = ctk.CTkFrame(info, fg_color="transparent")
+            row.pack(fill="x", padx=15, pady=2)
+
+            ctk.CTkLabel(
+                row,
+                text=key,
+                font=("Segoe UI", 13),
+                text_color="gray"
+            ).pack(side="left")
+
+            value = ctk.CTkLabel(
+                row,
+                text="",
+                font=("Segoe UI", 13, "bold")
+            )
+
+            value.pack(side="right")
+
+            self.info_values[key] = value
+
+        ctk.CTkFrame(info, height=10, fg_color="transparent").pack()
+
+        self.update_info()
+
+        settings_btn = ctk.CTkButton(
+            left,
+            text="⚙  Settings",
+            command=self.show_settings,
+            height=40,
+            font=("Segoe UI", 14),
+            fg_color="transparent",
+            border_width=1,
+            text_color=("gray10", "gray90")
+        )
+
+        settings_btn.pack(
+            side="bottom",
+            fill="x",
+            padx=20,
+            pady=20
         )
 
         # -------------------------------------------------
@@ -297,6 +349,198 @@ class ProxyApp:
         )
 
         empty_label.pack(pady=50)
+
+        self.setup_settings_page()
+
+    # =====================================================
+    # INFO
+    # =====================================================
+
+    def update_info(self):
+
+        c = self.config
+
+        self.info_values["Card"].configure(text=f"{c.card_width_mm:g} × {c.card_height_mm:g} mm")
+        self.info_values["Page"].configure(text=f"{c.page_width_mm:g} × {c.page_height_mm:g} mm")
+        self.info_values["Grid"].configure(text=f"{c.cols} × {c.rows}")
+        self.info_values["Export"].configure(text=f"PDF · {c.dpi} DPI")
+
+    # =====================================================
+    # SETTINGS PAGE
+    # =====================================================
+
+    SETTINGS_SECTIONS = [
+        ("Page", [
+            ("page_width_mm", "Width (mm)"),
+            ("page_height_mm", "Height (mm)"),
+        ]),
+        ("Grid", [
+            ("cols", "Columns"),
+            ("rows", "Rows"),
+        ]),
+        ("Card", [
+            ("card_width_mm", "Width (mm)"),
+            ("card_height_mm", "Height (mm)"),
+        ]),
+        ("Export", [
+            ("dpi", "Resolution (DPI)"),
+        ]),
+    ]
+
+    def setup_settings_page(self):
+
+        page = self.settings_page = ctk.CTkFrame(
+            self.root,
+            fg_color="transparent"
+        )
+
+        top = ctk.CTkFrame(page, fg_color="transparent")
+        top.pack(fill="x", pady=(0, 15))
+
+        ctk.CTkButton(
+            top,
+            text="← Back",
+            width=100,
+            command=self.show_main,
+            fg_color="transparent",
+            border_width=1,
+            text_color=("gray10", "gray90")
+        ).pack(side="left")
+
+        ctk.CTkLabel(
+            top,
+            text="Settings",
+            font=("Segoe UI", 24, "bold")
+        ).pack(side="left", padx=20)
+
+        body = ctk.CTkScrollableFrame(page, corner_radius=15)
+        body.pack(fill="both", expand=True)
+
+        self.settings_entries = {}
+
+        for section, items in self.SETTINGS_SECTIONS:
+
+            card = ctk.CTkFrame(body, corner_radius=12, fg_color=("gray85", "gray20"))
+            card.pack(fill="x", padx=20, pady=(20, 0))
+
+            ctk.CTkLabel(
+                card,
+                text=section.upper(),
+                font=("Segoe UI", 11, "bold"),
+                text_color="gray"
+            ).pack(anchor="w", padx=20, pady=(15, 5))
+
+            for name, label in items:
+
+                row = ctk.CTkFrame(card, fg_color="transparent")
+                row.pack(fill="x", padx=20, pady=5)
+
+                ctk.CTkLabel(
+                    row,
+                    text=label,
+                    font=("Segoe UI", 14)
+                ).pack(side="left")
+
+                entry = ctk.CTkEntry(row, width=140, justify="right")
+                entry.pack(side="right")
+
+                self.settings_entries[name] = entry
+
+            ctk.CTkFrame(card, height=10, fg_color="transparent").pack()
+
+        footer = ctk.CTkFrame(page, fg_color="transparent")
+        footer.pack(fill="x", pady=(15, 0))
+
+        self.settings_status = ctk.CTkLabel(
+            footer,
+            text="",
+            font=("Segoe UI", 13),
+            text_color="gray"
+        )
+
+        self.settings_status.pack(side="left")
+
+        ctk.CTkButton(
+            footer,
+            text="Save",
+            width=120,
+            height=40,
+            command=self.save_settings,
+            font=("Segoe UI", 14, "bold"),
+            fg_color="#16a34a",
+            hover_color="#15803d"
+        ).pack(side="right")
+
+        ctk.CTkButton(
+            footer,
+            text="Restore defaults",
+            width=150,
+            height=40,
+            command=lambda: self.fill_settings(Config()),
+            fg_color="transparent",
+            border_width=1,
+            text_color=("gray10", "gray90")
+        ).pack(side="right", padx=10)
+
+    def fill_settings(self, config):
+
+        for name, entry in self.settings_entries.items():
+            entry.delete(0, "end")
+            entry.insert(0, f"{getattr(config, name):g}")
+
+    def show_settings(self):
+
+        self.fill_settings(self.config)
+        self.settings_status.configure(text=f"File: {self.settings_path}", text_color="gray")
+
+        self.main_page.pack_forget()
+        self.settings_page.pack(fill="both", expand=True, padx=20, pady=20)
+
+    def show_main(self):
+
+        self.settings_page.pack_forget()
+        self.main_page.pack(fill="both", expand=True, padx=20, pady=20)
+
+    def save_settings(self):
+
+        types = {f.name: f.type for f in fields(Config)}
+        values = {}
+
+        for name, entry in self.settings_entries.items():
+
+            raw = entry.get().strip().replace(",", ".")
+
+            try:
+                value = types[name](raw)
+            except ValueError:
+                value = None
+
+            if value is None or value <= 0:
+                self.settings_status.configure(
+                    text=f"Invalid value for {name}: '{raw}'",
+                    text_color="#dc2626"
+                )
+                return
+
+            values[name] = value
+
+        try:
+            new_config = Config(**values)
+            save_config(new_config, self.settings_path)
+
+        except OSError as e:
+            self.settings_status.configure(text=f"Error: {e}", text_color="#dc2626")
+            return
+
+        self.config = new_config
+        self.cards_per_page = new_config.cards_per_page
+        self.current_page = 0
+
+        self.update_info()
+        self.preview_images.clear()
+        self.refresh_preview()
+
+        self.settings_status.configure(text="Saved ✓", text_color="#16a34a")
 
     # =====================================================
     # LOAD FILES
@@ -858,7 +1102,7 @@ class ProxyApp:
 
             col += 1
 
-            if col >= 3:
+            if col >= self.config.cols:
 
                 col = 0
                 row += 1
