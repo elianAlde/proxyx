@@ -4,9 +4,6 @@
     "page_height_mm": 297,
     "cols": 3,
     "rows": 3,
-    "card_formats": {
-        "Pokémon": { "width_mm": 63, "height_mm": 88 },
-        "Magic": { "width_mm": 63, "height_mm": 88 },
-        "Yu-Gi-Oh!": { "width_mm": 59, "height_mm": 86 }
-    }
+    "card_width_mm": 63,
+    "card_height_mm": 88
 }

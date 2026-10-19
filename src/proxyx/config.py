@@ -1,21 +1,13 @@
 # config.py
 
 import json
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, fields
 from pathlib import Path
 
 # src/proxyx/config.py -> parents[2] è la cartella del componente:
 # settings.json resta lì, fuori dal codice sorgente.
 BASE_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_SETTINGS_PATH = BASE_DIR / "settings.json"
-
-
-def _default_card_formats() -> dict[str, dict[str, float]]:
-    return {
-        "Pokémon": {"width_mm": 63, "height_mm": 88},
-        "Magic": {"width_mm": 63, "height_mm": 88},
-        "Yu-Gi-Oh!": {"width_mm": 59, "height_mm": 86},
-    }
 
 
 @dataclass
@@ -29,10 +21,9 @@ class Config:
     cols: int = 3
     rows: int = 3
 
-    # Formati delle carte supportati, in millimetri
-    card_formats: dict[str, dict[str, float]] = field(
-        default_factory=_default_card_formats
-    )
+    # Dimensioni di una carta Magic standard, in millimetri
+    card_width_mm: float = 63
+    card_height_mm: float = 88
 
     @property
     def cards_per_page(self) -> int:

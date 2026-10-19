@@ -19,7 +19,7 @@ CACHE_DIR = os.path.join(
 # Scryfall asks integrations to identify themselves via headers.
 # https://scryfall.com/docs/api
 HEADERS = {
-    "User-Agent": "Proxyx/1.0 (+https://github.com/elianAlde/proxyx)",
+    "User-Agent": "Proxyx/0.1 (+https://github.com/elianAlde/proxyx)",
     "Accept": "application/json"
 }
 

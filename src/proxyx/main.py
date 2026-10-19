@@ -8,7 +8,7 @@ from .config import DEFAULT_SETTINGS_PATH, load_config
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Proxyx - generatore di fogli proxy stampabili per TCG"
+        description="Proxyx - generatore di fogli proxy stampabili per Magic: The Gathering"
     )
     parser.add_argument(
         "--settings",

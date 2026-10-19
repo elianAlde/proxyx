@@ -47,13 +47,11 @@ def card_positions(
 class ProxyGenerator:
 
     @staticmethod
-    def generate_pdf(files, card_type, output_path, config: Config):
-
-        fmt = config.card_formats[card_type]
+    def generate_pdf(files, output_path, config: Config):
 
         card_size = (
-            mm_to_px(fmt["width_mm"], config.dpi),
-            mm_to_px(fmt["height_mm"], config.dpi),
+            mm_to_px(config.card_width_mm, config.dpi),
+            mm_to_px(config.card_height_mm, config.dpi),
         )
         page_size = (
             mm_to_px(config.page_width_mm, config.dpi),

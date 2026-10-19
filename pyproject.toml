@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "proxyx"
 version = "0.1.0"
-description = "Generatore desktop di fogli proxy stampabili per TCG"
+description = "Desktop app that lays out Magic: The Gathering proxies on printable PDF sheets"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

@@ -41,6 +41,10 @@ class ProxyApp:
         self.root.minsize(1000, 650)
 
         self.files = []
+
+        # Nome da mostrare sotto le carte scaricate da Scryfall
+        # (il file in cache ha come nome l'id della carta)
+        self.card_names = {}
         self.preview_images = []
 
         self.current_page = 0
@@ -68,7 +72,7 @@ class ProxyApp:
 
         title = ctk.CTkLabel(
             header,
-            text="Proxyx - Fast TCG Proxy Generator",
+            text="Proxyx - MTG Proxy Generator",
             font=("Segoe UI", 34, "bold")
         )
 
@@ -109,39 +113,6 @@ class ProxyApp:
         left.pack_propagate(False)
 
         # -------------------------------------------------
-        # CARD TYPE
-        # -------------------------------------------------
-
-        card_label = ctk.CTkLabel(
-            left,
-            text="Card Type",
-            font=("Segoe UI", 18, "bold")
-        )
-
-        card_label.pack(
-            anchor="w",
-            padx=20,
-            pady=(20, 10)
-        )
-
-        self.card_type = ctk.CTkComboBox(
-            left,
-            values=list(self.config.card_formats.keys()),
-            width=220,
-            height=40,
-            font=("Segoe UI", 14),
-            dropdown_font=("Segoe UI", 13),
-            command=self.on_card_type_change
-        )
-
-        self.card_type.set("Magic")
-
-        self.card_type.pack(
-            padx=20,
-            pady=(0, 30)
-        )
-
-        # -------------------------------------------------
         # BUTTONS
         # -------------------------------------------------
 
@@ -150,7 +121,7 @@ class ProxyApp:
             fg_color="transparent"
         )
 
-        button_group.pack(fill="x")
+        button_group.pack(fill="x", pady=(20, 0))
 
         load_btn = ctk.CTkButton(
             button_group,
@@ -224,9 +195,9 @@ class ProxyApp:
         info = ctk.CTkLabel(
             left,
             text=(
-                "Supported:\n"
-                + "".join(f"• {name}\n" for name in self.config.card_formats)
-                + "\nExport:\n"
+                "Format:\n"
+                f"• {self.config.card_width_mm:g} × {self.config.card_height_mm:g} mm\n\n"
+                "Export:\n"
                 "• PDF\n"
                 f"• {self.config.dpi} DPI"
             ),
@@ -342,32 +313,17 @@ class ProxyApp:
         self.add_files(files)
 
     # =====================================================
-    # CARD TYPE CHANGE
-    # =====================================================
-
-    def on_card_type_change(self, choice):
-
-        if choice == "Magic":
-
-            self.scryfall_btn.pack(
-                fill="x",
-                padx=20,
-                pady=(0, 15)
-            )
-
-        else:
-
-            self.scryfall_btn.pack_forget()
-
-    # =====================================================
     # ADD FILES
     # =====================================================
 
-    def add_files(self, files):
+    def add_files(self, files, name=None):
 
         for file in files:
 
             self.files.append(file)
+
+            if name:
+                self.card_names[file] = name
 
         self.preview_images.clear()
 
@@ -497,7 +453,7 @@ class ProxyApp:
                 def on_done():
 
                     if path:
-                        self.add_files([path])
+                        self.add_files([path], card.get("name"))
                         status_label.configure(text=f"Added: {card.get('name', 'card')}")
 
                     else:
@@ -724,7 +680,7 @@ class ProxyApp:
                 def on_done():
 
                     if path:
-                        self.add_files([path])
+                        self.add_files([path], print_card.get("name"))
                         status_label.configure(text=f"Added: {print_card.get('name')} ({print_card.get('set_name')})")
 
                     else:
@@ -890,7 +846,7 @@ class ProxyApp:
 
             filename = ctk.CTkLabel(
                 container,
-                text=os.path.basename(file),
+                text=self.card_names.get(file, os.path.basename(file)),
                 font=("Segoe UI", 13, "bold"),
                 wraplength=180
             )
@@ -939,6 +895,8 @@ class ProxyApp:
 
         self.files.clear()
 
+        self.card_names.clear()
+
         self.preview_images.clear()
 
         self.current_page = 0
@@ -974,7 +932,6 @@ class ProxyApp:
 
             ProxyGenerator.generate_pdf(
                 self.files,
-                self.card_type.get(),
                 output,
                 self.config
             )

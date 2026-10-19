@@ -11,7 +11,7 @@ def test_campi_mancanti_prendono_il_default(tmp_path):
 
     assert config.dpi == 600
     assert config.cols == Config().cols
-    assert "Magic" in config.card_formats
+    assert config.card_width_mm == Config().card_width_mm
 
 
 def test_file_assente_usa_i_default(tmp_path):
