@@ -5,7 +5,7 @@ ctk.set_default_color_theme("blue")
 
 FONT_FAMILY = "Segoe UI"
 
-# Le tuple (chiaro, scuro) vengono scelte da customtkinter in base al tema attivo
+# customtkinter picks from (light, dark) tuples based on the active appearance mode
 SURFACE = ("gray85", "gray20")
 MUTED = "gray"
 SUCCESS = "#16a34a"

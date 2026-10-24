@@ -9,16 +9,16 @@ from ..scryfall import download_card_image, fetch_image, get_prints, search_card
 from .theme import GHOST_BUTTON, MUTED, font
 from .widgets import CardGrid, CardTile, run_in_background
 
-# Ritardo tra il download di una miniatura e la successiva, per non martellare Scryfall
+# Delay between thumbnail downloads, to avoid hammering Scryfall
 THUMBNAIL_STAGGER_S = 0.05
 
 OnAdd = Callable[[str, str], None]
 
 
 class CardBrowserDialog(ctk.CTkToplevel):
-    """Finestra modale con una griglia di carte Scryfall da aggiungere al foglio.
+    """Modal window showing a grid of Scryfall cards that can be added to the sheet.
 
-    Le sottoclassi decidono come ottenere le carte e come presentarle (build_tile).
+    Subclasses decide how cards are fetched and how each one is shown (build_tile).
     """
 
     def __init__(self, master, title: str, on_add: OnAdd):
@@ -122,7 +122,7 @@ class SearchDialog(CardBrowserDialog):
 
 
 class VersionPicker(CardBrowserDialog):
-    """Elenca tutte le stampe di una carta per sceglierne una in particolare."""
+    """Lists every printing of a card so a specific one can be picked."""
 
     def __init__(self, master, card: dict, on_add: OnAdd):
         super().__init__(master, f"Versions - {card.get('name', 'Card')}", on_add)

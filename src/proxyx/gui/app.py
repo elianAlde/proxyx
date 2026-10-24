@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox
 
@@ -21,7 +22,7 @@ class ProxyApp:
     def __init__(self, config: Config, settings_path: Path = DEFAULT_SETTINGS_PATH):
         self.config = config
         self.files: list[str] = []
-        # Le immagini Scryfall in cache si chiamano con l'id della carta: qui teniamo il nome leggibile
+        # Cached Scryfall images are named after the card id: keep the readable name here
         self.card_names: dict[str, str] = {}
         self.current_page = 0
 
@@ -80,7 +81,7 @@ class ProxyApp:
         self.preview = CardGrid(content, columns=self.config.cols)
         self.preview.pack(fill="both", expand=True, padx=20, pady=(0, 20))
 
-    # --- Navigazione tra le pagine dell'app ---
+    # --- Switching between app pages ---
 
     def show_main(self):
         self.settings_page.pack_forget()
@@ -102,10 +103,10 @@ class ProxyApp:
         c = self.config
         self.info.set("Card", f"{c.card_width_mm:g} × {c.card_height_mm:g} mm")
         self.info.set("Page", f"{c.page_width_mm:g} × {c.page_height_mm:g} mm")
-        self.info.set("Grid", f"{c.cols} × {c.rows}")
+        self.info.set("Grid", f"{c.cols} × {c.rows} · {c.card_spacing_mm:g} mm gap")
         self.info.set("Export", f"PDF · {c.dpi} DPI")
 
-    # --- Carte caricate e anteprima ---
+    # --- Loaded cards and preview ---
 
     def load_files(self):
         files = filedialog.askopenfilenames(filetypes=[("Image files", "*.png *.jpg *.jpeg *.webp")])
@@ -158,7 +159,7 @@ class ProxyApp:
             messagebox.showerror("Error", "No images loaded.")
             return
 
-        output = filedialog.asksaveasfilename(title="Save PDF", defaultextension=".pdf", initialfile="proxy_cards.pdf", filetypes=[("PDF files", "*.pdf")])
+        output = filedialog.asksaveasfilename(title="Save PDF", defaultextension=".pdf", initialfile=f"proxy_cards_{datetime.now():%Y%m%d_%H%M%S}.pdf", filetypes=[("PDF files", "*.pdf")])
 
         if not output:
             return

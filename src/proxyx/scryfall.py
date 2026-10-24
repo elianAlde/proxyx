@@ -6,14 +6,14 @@ SCRYFALL_SEARCH_URL = "https://api.scryfall.com/cards/search"
 
 CACHE_DIR = os.path.join(os.path.expanduser("~"), ".proxyx", "scryfall_cache")
 
-# Scryfall chiede alle integrazioni di identificarsi tramite header.
+# Scryfall asks integrations to identify themselves through headers.
 # https://scryfall.com/docs/api
 HEADERS = {
     "User-Agent": "Proxyx/0.1 (+https://github.com/elianAlde/proxyx)",
     "Accept": "application/json",
 }
 
-# Le immagini stanno su un CDN che non vuole l'header Accept: application/json
+# Images are served by a CDN that rejects the Accept: application/json header
 IMAGE_HEADERS = {"User-Agent": HEADERS["User-Agent"]}
 
 
@@ -23,7 +23,7 @@ def search_cards(query, max_results=24):
 
     response = requests.get(SCRYFALL_SEARCH_URL, params={"q": query.strip(), "unique": "cards"}, headers=HEADERS, timeout=10)
 
-    # Scryfall risponde 404 quando la ricerca non trova nulla
+    # Scryfall answers 404 when a search has no results
     if response.status_code == 404:
         return []
 
@@ -45,7 +45,7 @@ def get_prints(card, max_results=75):
 def get_image_url(card, version="normal"):
     image_uris = card.get("image_uris")
 
-    # Le carte double-faced non hanno image_uris in radice: si usa il fronte
+    # Double-faced cards have no top-level image_uris: use the front face
     if not image_uris:
         faces = card.get("card_faces") or []
         image_uris = faces[0].get("image_uris") if faces else None
@@ -57,7 +57,7 @@ def get_image_url(card, version="normal"):
 
 
 def fetch_image(card, version="normal", timeout=10):
-    """Scarica l'immagine della carta e ne restituisce i byte, o None se non ce l'ha."""
+    """Download the card image and return its bytes, or None if the card has no image."""
 
     url = get_image_url(card, version)
 
@@ -69,10 +69,14 @@ def fetch_image(card, version="normal", timeout=10):
     return response.content
 
 
-def download_card_image(card, version="large"):
-    """Salva l'immagine nella cache su disco (una volta sola per carta) e ne restituisce il percorso."""
+def download_card_image(card, version="png"):
+    """Save the image to the disk cache (once per card) and return its path.
 
-    dest = os.path.join(CACHE_DIR, f"{card.get('id', 'card')}.jpg")
+    The "png" version is 745 × 1040 px: a 63 × 88 mm card at 300 DPI, so it prints without upscaling.
+    """
+
+    ext = "png" if version == "png" else "jpg"
+    dest = os.path.join(CACHE_DIR, f"{card.get('id', 'card')}-{version}.{ext}")
 
     if os.path.exists(dest):
         return dest

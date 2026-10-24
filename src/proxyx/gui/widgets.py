@@ -10,9 +10,9 @@ THUMBNAIL_SIZE = (140, 195)
 
 
 def run_in_background(widget: ctk.CTkBaseClass, work: Callable, on_done: Callable) -> None:
-    """Esegue work() in un thread e chiama on_done(result, error) sul thread della UI.
+    """Run work() in a thread and call on_done(result, error) on the UI thread.
 
-    Tkinter non è thread-safe: il callback passa da after() per tornare sul main loop.
+    Tkinter is not thread-safe: the callback goes through after() to get back on the main loop.
     """
 
     def worker():
@@ -24,7 +24,7 @@ def run_in_background(widget: ctk.CTkBaseClass, work: Callable, on_done: Callabl
         try:
             widget.after(0, lambda: on_done(result, error))
         except RuntimeError:
-            pass  # finestra già chiusa: il risultato non serve più
+            pass  # window already closed: the result is no longer needed
 
     threading.Thread(target=worker, daemon=True).start()
 
@@ -36,7 +36,7 @@ def to_ctk_image(img: Image.Image, max_size: tuple[int, int]) -> ctk.CTkImage:
 
 
 class Section(ctk.CTkFrame):
-    """Riquadro con titolo in maiuscoletto, usato per raggruppare contenuti affini."""
+    """Panel with an uppercase title, used to group related content."""
 
     def __init__(self, master, title: str, padx: int = 15):
         super().__init__(master, corner_radius=12, fg_color=SURFACE)
@@ -53,7 +53,7 @@ class Section(ctk.CTkFrame):
 
 
 class InfoPanel(Section):
-    """Elenco chiave/valore in sola lettura."""
+    """Read-only list of key/value rows."""
 
     def __init__(self, master, title: str, keys: Iterable[str]):
         super().__init__(master, title)
@@ -70,7 +70,7 @@ class InfoPanel(Section):
 
 
 class CardTile(ctk.CTkFrame):
-    """Miniatura di una carta con titolo, sottotitolo e una riga di azioni."""
+    """Card thumbnail with a title, a subtitle and a row of actions."""
 
     def __init__(self, master, title: str, subtitle: str = "", image_size=THUMBNAIL_SIZE, wrap: int = 160):
         super().__init__(master, corner_radius=12)
@@ -84,14 +84,14 @@ class CardTile(ctk.CTkFrame):
         if subtitle:
             ctk.CTkLabel(self, text=subtitle, font=font(11), text_color=MUTED, wraplength=wrap).pack(padx=10)
 
-        # Spazio sotto il testo; se arrivano azioni le ospita, altrimenti fa da margine
+        # Space below the text: hosts the actions if any are added, otherwise acts as a margin
         self._footer = ctk.CTkFrame(self, height=10, fg_color="transparent")
         self._footer.pack()
         self._actions = None
 
     @property
     def actions(self) -> ctk.CTkFrame:
-        """Riga dei pulsanti, creata solo se serve: un CTkFrame vuoto resta alto 200 px."""
+        """Button row, created only when needed: an empty CTkFrame stays 200 px tall."""
 
         if self._actions is None:
             self._actions = ctk.CTkFrame(self, fg_color="transparent")
@@ -105,7 +105,7 @@ class CardTile(ctk.CTkFrame):
 
 
 class CardGrid(ctk.CTkScrollableFrame):
-    """Area scorrevole che dispone i figli in una griglia a colonne fisse, centrata nello spazio disponibile."""
+    """Scrollable area that lays out its children in a fixed-column grid, centred in the available space."""
 
     def __init__(self, master, columns: int = 3, **kwargs):
         super().__init__(master, corner_radius=10, **kwargs)
@@ -121,7 +121,7 @@ class CardGrid(ctk.CTkScrollableFrame):
         ctk.CTkLabel(self, text=text, font=font(18), text_color=MUTED).grid(row=0, column=0, padx=20, pady=50)
 
     def fill(self, items: Iterable, build: Callable[[ctk.CTkFrame, object], ctk.CTkBaseClass]) -> None:
-        """Svuota la griglia e crea un widget per ogni elemento con build(self, item)."""
+        """Clear the grid and create one widget per item with build(self, item)."""
 
         self.clear()
         self._set_column_weights(self.columns)
@@ -130,7 +130,7 @@ class CardGrid(ctk.CTkScrollableFrame):
             build(self, item).grid(row=i // self.columns, column=i % self.columns, padx=10, pady=10, sticky="n")
 
     def _set_column_weights(self, columns: int) -> None:
-        # Colonne con lo stesso peso: lo spazio avanzato si divide equamente invece di finire tutto a destra
+        # Equally weighted columns: leftover space is split evenly instead of piling up on the right
         for col in range(max(columns, self.grid_size()[0])):
             active = col < columns
             self.grid_columnconfigure(col, weight=int(active), uniform="tile" if active else "")

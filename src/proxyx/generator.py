@@ -1,28 +1,28 @@
 import math
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from .config import Config
 
 
 def mm_to_px(mm: float, dpi: int) -> int:
-    return int(mm / 25.4 * dpi)
+    return round(mm / 25.4 * dpi)
 
 
 def count_pages(num_cards: int, cards_per_page: int) -> int:
     return math.ceil(num_cards / cards_per_page)
 
 
-def card_positions(page_size: tuple[int, int], card_size: tuple[int, int], cols: int, rows: int) -> list[tuple[int, int]]:
-    """Angolo in alto a sinistra di ogni carta, griglia centrata nella pagina."""
+def card_positions(page_size: tuple[int, int], card_size: tuple[int, int], cols: int, rows: int, spacing: int = 0) -> list[tuple[int, int]]:
+    """Top-left corner of each card, with the grid (spacing included) centred on the page."""
 
     page_w, page_h = page_size
-    card_w, card_h = card_size
+    step_x, step_y = card_size[0] + spacing, card_size[1] + spacing
 
-    margin_x = (page_w - cols * card_w) // 2
-    margin_y = (page_h - rows * card_h) // 2
+    margin_x = (page_w - cols * step_x + spacing) // 2
+    margin_y = (page_h - rows * step_y + spacing) // 2
 
-    return [(margin_x + col * card_w, margin_y + row * card_h) for row in range(rows) for col in range(cols)]
+    return [(margin_x + col * step_x, margin_y + row * step_y) for row in range(rows) for col in range(cols)]
 
 
 class ProxyGenerator:
@@ -35,7 +35,7 @@ class ProxyGenerator:
         cards = [fit_on_card(file, card_size) for file in files]
 
         per_page = config.cards_per_page
-        positions = card_positions(page_size, card_size, config.cols, config.rows)
+        positions = card_positions(page_size, card_size, config.cols, config.rows, mm_to_px(config.card_spacing_mm, config.dpi))
         pages = []
 
         for p in range(count_pages(len(cards), per_page)):
@@ -50,13 +50,11 @@ class ProxyGenerator:
 
 
 def fit_on_card(file, card_size: tuple[int, int]) -> Image.Image:
-    """Ridimensiona l'immagine mantenendo le proporzioni e la centra su una carta bianca."""
+    """Scale the image to exactly fill the card, cropping the few pixels that differ in aspect ratio.
+
+    Image.thumbnail() would only ever shrink: smaller sources (e.g. Scryfall's 672 px "large")
+    would end up printed smaller than a real card.
+    """
 
     with Image.open(file) as img:
-        img = img.convert("RGB")
-
-    img.thumbnail(card_size)
-
-    card = Image.new("RGB", card_size, "white")
-    card.paste(img, ((card_size[0] - img.width) // 2, (card_size[1] - img.height) // 2))
-    return card
+        return ImageOps.fit(img.convert("RGB"), card_size, Image.Resampling.LANCZOS)
