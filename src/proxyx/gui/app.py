@@ -7,11 +7,11 @@ import customtkinter as ctk
 from PIL import Image
 
 from ..config import DEFAULT_SETTINGS_PATH, Config
-from ..generator import ProxyGenerator
+from ..generator import ProxyGenerator, count_pages
 from .dialogs import SearchDialog
 from .settings_page import SettingsPage
-from .theme import ACCENT_BUTTON, DANGER_BUTTON, GHOST_BUTTON, PRIMARY_BUTTON, font
-from .widgets import CardGrid, CardTile, InfoPanel
+from .theme import ACCENT_BUTTON, DANGER_OUTLINE_BUTTON, ERROR, GHOST_BUTTON, MUTED, PRIMARY_BUTTON, SUCCESS, font
+from .widgets import CardGrid, CardTile, InfoPanel, run_in_background
 
 PREVIEW_SIZE = (180, 250)
 PAGE_PADDING = {"padx": 20, "pady": 20}
@@ -34,6 +34,7 @@ class ProxyApp:
         header = ctk.CTkFrame(self.root, height=90, corner_radius=0)
         header.pack(fill="x")
         ctk.CTkLabel(header, text="Proxyx - MTG Proxy Generator", font=font(34, bold=True)).place(relx=0.5, rely=0.5, anchor="center")
+        ctk.CTkButton(header, text="⚙  Settings", width=120, height=36, font=font(14), command=self.show_settings, **GHOST_BUTTON).place(relx=1, rely=0.5, x=-20, anchor="e")
 
         self.main_page = ctk.CTkFrame(self.root, fg_color="transparent")
         self._build_sidebar(self.main_page)
@@ -50,11 +51,11 @@ class ProxyApp:
         sidebar.pack(side="left", fill="y", padx=(0, 20))
         sidebar.pack_propagate(False)
 
+        # Top to bottom it follows the workflow: add cards, check the output, generate
         actions = [
-            ("Load Images", self.load_files, {}),
             ("🔎 Search Scryfall", self.open_scryfall_search, ACCENT_BUTTON),
-            ("Generate PDF", self.generate_pdf, PRIMARY_BUTTON),
-            ("Clear", self.clear_all, DANGER_BUTTON),
+            ("Load Images", self.load_files, {}),
+            ("Clear", self.clear_all, DANGER_OUTLINE_BUTTON),
         ]
 
         for i, (text, command, style) in enumerate(actions):
@@ -64,8 +65,16 @@ class ProxyApp:
         self.info = InfoPanel(sidebar, "Output", ["Card", "Page", "Grid", "Export"])
         self.info.pack(fill="x", padx=20, pady=(30, 0))
 
-        settings_button = ctk.CTkButton(sidebar, text="⚙  Settings", command=self.show_settings, height=40, font=font(14), **GHOST_BUTTON)
-        settings_button.pack(side="bottom", fill="x", **PAGE_PADDING)
+        # Packed from the bottom up: the button sits at the very bottom, the progress just above it
+        self.generate_button = ctk.CTkButton(sidebar, text="Generate PDF", command=self.generate_pdf, height=50, font=font(16, bold=True), **PRIMARY_BUTTON)
+        self.generate_button.pack(side="bottom", fill="x", padx=20, pady=(0, 20))
+
+        self.progress = ctk.CTkProgressBar(sidebar, height=8)
+        self.progress.set(0)
+        self.progress.pack(side="bottom", fill="x", padx=20, pady=(0, 12))
+
+        self.progress_label = ctk.CTkLabel(sidebar, text="", font=font(12), text_color=MUTED, wraplength=220)
+        self.progress_label.pack(side="bottom", padx=20, pady=(0, 4))
 
     def _build_preview(self, parent):
         content = ctk.CTkFrame(parent, corner_radius=15)
@@ -132,6 +141,8 @@ class ProxyApp:
             self.refresh_preview()
 
     def refresh_preview(self):
+        self.update_progress_label()
+
         if not self.files:
             self.preview.show_message("No cards loaded")
             return
@@ -154,6 +165,10 @@ class ProxyApp:
         self.current_page = 0
         self.refresh_preview()
 
+    def update_progress_label(self):
+        pages = count_pages(len(self.files), self.config.cards_per_page)
+        self.progress_label.configure(text=f"{len(self.files)} card(s) · {pages} page(s)", text_color=MUTED)
+
     def generate_pdf(self):
         if not self.files:
             messagebox.showerror("Error", "No images loaded.")
@@ -164,13 +179,31 @@ class ProxyApp:
         if not output:
             return
 
-        try:
-            ProxyGenerator.generate_pdf(self.files, output, self.config)
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
-            return
+        files, config = list(self.files), self.config
+        self.generate_button.configure(state="disabled", text="Generating...")
+        self.progress.set(0)
 
-        messagebox.showinfo("Success", "PDF generated successfully!")
+        def on_progress(done, total):
+            # Called from the worker thread: hand the update over to the UI thread
+            self.root.after(0, lambda: self.show_progress(done, total))
+
+        def on_done(_, error):
+            self.generate_button.configure(state="normal", text="Generate PDF")
+
+            if error:
+                self.progress.set(0)
+                self.progress_label.configure(text="PDF generation failed", text_color=ERROR)
+                messagebox.showerror("Error", str(error))
+                return
+
+            self.progress_label.configure(text=f"Saved {os.path.basename(output)}", text_color=SUCCESS)
+
+        run_in_background(self.root, lambda: ProxyGenerator.generate_pdf(files, output, config, on_progress), on_done)
+
+    def show_progress(self, done: int, total: int):
+        self.progress.set(done / total)
+        cards = total - 1
+        self.progress_label.configure(text="Saving PDF..." if done >= cards else f"Rendering card {done} of {cards}", text_color=MUTED)
 
     def run(self):
         self.root.mainloop()

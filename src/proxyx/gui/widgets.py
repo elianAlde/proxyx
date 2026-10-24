@@ -115,6 +115,9 @@ class CardGrid(ctk.CTkScrollableFrame):
         for widget in self.winfo_children():
             widget.destroy()
 
+        # New content starts from the top, not where the previous results were scrolled to
+        self._parent_canvas.yview_moveto(0)
+
     def show_message(self, text: str) -> None:
         self.clear()
         self._set_column_weights(1)

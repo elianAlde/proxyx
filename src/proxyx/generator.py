@@ -1,4 +1,5 @@
 import math
+from typing import Callable
 
 from PIL import Image, ImageOps
 
@@ -28,25 +29,36 @@ def card_positions(page_size: tuple[int, int], card_size: tuple[int, int], cols:
 class ProxyGenerator:
 
     @staticmethod
-    def generate_pdf(files, output_path, config: Config):
+    def generate_pdf(files, output_path, config: Config, on_progress: Callable[[int, int], None] | None = None):
+        """Render the cards into a multi-page PDF.
+
+        on_progress(done, total) is called after each card and once more after saving:
+        scaling the images is the slow part, so it is what the progress follows.
+        """
+
         card_size = (mm_to_px(config.card_width_mm, config.dpi), mm_to_px(config.card_height_mm, config.dpi))
         page_size = (mm_to_px(config.page_width_mm, config.dpi), mm_to_px(config.page_height_mm, config.dpi))
-
-        cards = [fit_on_card(file, card_size) for file in files]
+        positions = card_positions(page_size, card_size, config.cols, config.rows, mm_to_px(config.card_spacing_mm, config.dpi))
 
         per_page = config.cards_per_page
-        positions = card_positions(page_size, card_size, config.cols, config.rows, mm_to_px(config.card_spacing_mm, config.dpi))
+        total = len(files) + 1
         pages = []
 
-        for p in range(count_pages(len(cards), per_page)):
+        for p in range(count_pages(len(files), per_page)):
             page = Image.new("RGB", page_size, "white")
 
-            for card, pos in zip(cards[p * per_page:(p + 1) * per_page], positions):
-                page.paste(card, pos)
+            for i, (file, pos) in enumerate(zip(files[p * per_page:(p + 1) * per_page], positions), start=p * per_page + 1):
+                page.paste(fit_on_card(file, card_size), pos)
+
+                if on_progress:
+                    on_progress(i, total)
 
             pages.append(page)
 
         pages[0].save(output_path, "PDF", resolution=config.dpi, save_all=True, append_images=pages[1:])
+
+        if on_progress:
+            on_progress(total, total)
 
 
 def fit_on_card(file, card_size: tuple[int, int]) -> Image.Image:

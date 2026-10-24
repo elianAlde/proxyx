@@ -35,11 +35,13 @@ It was built to solve a simple problem: playtesting a deck idea before buying th
 <br>
 ✅ Multi-page preview with pagination
 <br>
-✅ Automatic 3 × 3 grid layout at real card size
+✅ Cards printed at real size (63 × 88 mm), 3 × 3 per A4 sheet by default
 <br>
-✅ PDF export at 300 DPI
+✅ Small gap between cards to make cutting easier
 <br>
-✅ Page size, grid, card size and DPI configurable in `settings.json`
+✅ PDF export at 150, 300 or 600 DPI, with a timestamped filename so exports never overwrite each other
+<br>
+✅ Settings page for paper size, grid, card size, spacing and resolution, with only valid choices offered
 
 
 ## 📸 Screenshots
@@ -60,6 +62,12 @@ It was built to solve a simple problem: playtesting a deck idea before buying th
 
 <p align="center">
   <img src="assets/scryfall-versions-screenshot.png" width="100%" />
+</p>
+
+### Settings
+
+<p align="center">
+  <img src="assets/settings-screenshot.png" width="100%" />
 </p>
 
 ### Generated printable layout
@@ -111,22 +119,25 @@ Next time, just open the folder, activate the environment again (`source venv/bi
 
 1. Add cards with **🔎 Search Scryfall** (use **Versions** to pick a specific printing) or with **Load Images**
 2. Browse the pages with **← Previous** / **Next →**
-3. Click **Generate PDF** and print the file
+3. Optionally open **⚙ Settings** to change paper size, grid, spacing or resolution
+4. Click **Generate PDF** and print the file at 100% scale
 
 
-## 🔧 Configuration (`settings.json`)
+## 🔧 Configuration
 
-| Field | Default | Meaning |
-|---|---|---|
-| `dpi` | `300` | Resolution of the generated PDF |
-| `page_width_mm` | `210` | Sheet width (A4) |
-| `page_height_mm` | `297` | Sheet height (A4) |
-| `cols` | `3` | Cards per row |
-| `rows` | `3` | Rows per page |
-| `card_width_mm` | `63` | Card width |
-| `card_height_mm` | `88` | Card height |
+Everything can be changed from the **⚙ Settings** page, which saves to `settings.json` in the project folder. The page only offers values that work together: columns and rows are limited to what fits on the chosen paper, and invalid card sizes keep **Save** disabled.
 
-Missing fields fall back to their default value. Images downloaded from Scryfall are cached in `~/.proxyx/scryfall_cache`.
+| Setting | Field in `settings.json` | Default | Allowed values |
+|---|---|---|---|
+| Paper size | `page_width_mm`, `page_height_mm` | A4 (`210` × `297`) | A4, A3, Letter, Legal |
+| Columns / rows | `cols`, `rows` | `3` × `3` | As many as fit on the page |
+| Space between cards | `card_spacing_mm` | `1` | 0, 0.5, 1, 2, 3 mm |
+| Card size | `card_width_mm`, `card_height_mm` | `63` × `88` | 40–100 × 55–140 mm |
+| Resolution | `dpi` | `300` | 150, 300, 600 |
+
+Change the card size only to compensate for a printer that scales the page. You can also edit `settings.json` by hand or point to another file with `proxyx --settings path/to/settings.json`: missing fields fall back to their default, and invalid values stop the app with a message explaining what to fix.
+
+Images downloaded from Scryfall are cached in `~/.proxyx/scryfall_cache`.
 
 
 ## 🖨 Printing Tips
@@ -142,7 +153,8 @@ Missing fields fall back to their default value. Images downloaded from Scryfall
 |---|---|
 | `command not found: proxyx` | The virtual environment is not active: run `source venv/bin/activate` (Windows: `venv\Scripts\activate`) from the `proxyx` folder |
 | `No module named '_tkinter'` | Your Python build ships without Tk. On macOS with Homebrew: `brew install python-tk` |
-| Printed cards have the wrong size | Set the print scale to 100% and disable "fit to page" in the print dialog |
+| Printed cards have the wrong size | Set the print scale to 100% and disable "fit to page" in the print dialog. If your printer still scales, adjust the card size in **⚙ Settings** |
+| `Error: Invalid settings in ...` at startup | `settings.json` contains a value out of range: fix the field named in the message, or delete the file to go back to the defaults |
 
 
 ## 🧑‍💻 Development
@@ -152,14 +164,17 @@ pip install -e ".[dev]"
 pytest
 ```
 
-The tests cover the pure logic: mm → pixel conversion, page layout, Scryfall response parsing and configuration loading.
+The tests cover the pure logic: mm → pixel conversion, page layout and spacing, image scaling, Scryfall response parsing, and configuration loading and validation.
 
 | Module | Responsibility |
 |---|---|
-| `config.py` | Loads `settings.json` into a dataclass |
+| `config.py` | Settings dataclass, validation, loading and saving `settings.json` |
 | `generator.py` | Layout math and PDF rendering |
 | `scryfall.py` | Scryfall API client and image cache |
-| `gui.py` | CustomTkinter interface |
+| `gui/app.py` | Main window: sidebar, preview and PDF export |
+| `gui/dialogs.py` | Scryfall search and printing picker |
+| `gui/settings_page.py` | Settings page |
+| `gui/widgets.py`, `gui/theme.py` | Reusable widgets, fonts and colours |
 | `main.py` | Command line entry point |
 
 
@@ -180,10 +195,11 @@ The tests cover the pure logic: mm → pixel conversion, page layout, Scryfall r
   - Search and import cards directly from the app
 - [ ] 📋 **Decklist import**
   - Paste a decklist and fetch every card at once
-- [ ] 🖨 **Advanced print controls**
-  - Bleed margins
-  - Crop marks
-  - Printer calibration
+- [ ] 🌍 **Multilingual**
+  - Interface available in more languages
+- [ ] 🧰 **Advanced search and filters**
+  - Search cards by language
+  - Choose how many copies of a card to add (e.g. a playset of 4 in one click)
 
 
 <a id="disclaimer"></a>

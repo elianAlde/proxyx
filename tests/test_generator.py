@@ -1,6 +1,7 @@
 from PIL import Image
 
-from proxyx.generator import card_positions, count_pages, fit_on_card, mm_to_px
+from proxyx.config import Config
+from proxyx.generator import ProxyGenerator, card_positions, count_pages, fit_on_card, mm_to_px
 
 
 def test_mm_to_px_one_inch():
@@ -48,3 +49,15 @@ def test_fit_on_card_upscales_small_images(tmp_path):
     assert card.size == (744, 1039)
     assert card.getpixel((0, 0)) == (0, 0, 0)
     assert card.getpixel((743, 1038)) == (0, 0, 0)
+
+
+def test_generate_pdf_reports_progress(tmp_path):
+    image = tmp_path / "card.png"
+    Image.new("RGB", (100, 140), "black").save(image)
+    calls = []
+
+    ProxyGenerator.generate_pdf([image] * 10, tmp_path / "out.pdf", Config(dpi=150), lambda done, total: calls.append((done, total)))
+
+    # 10 cards + 1 saving step, reported in order
+    assert calls == [(i, 11) for i in range(1, 12)]
+    assert (tmp_path / "out.pdf").stat().st_size > 0

@@ -30,7 +30,8 @@ class CardBrowserDialog(ctk.CTkToplevel):
         self.transient(master)
         self.grab_set()
 
-        self.header = ctk.CTkFrame(self, fg_color="transparent")
+        # height=1: an empty CTkFrame would otherwise stay 200 px tall in dialogs that leave it empty
+        self.header = ctk.CTkFrame(self, height=1, fg_color="transparent")
         self.header.pack(fill="x", padx=20, pady=(20, 0))
 
         self.grid_view = CardGrid(self)
