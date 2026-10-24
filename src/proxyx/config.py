@@ -1,5 +1,3 @@
-# config.py
-
 import json
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
