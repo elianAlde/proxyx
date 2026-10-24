@@ -1,6 +1,7 @@
 import json
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
+from typing import Any, Callable
 
 # src/proxyx/config.py -> parents[2] is the project folder:
 # settings.json lives there, outside the source code.
@@ -44,7 +45,7 @@ class Config:
     card_width_mm: float = 63
     card_height_mm: float = 88
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if errors := validate(self):
             raise ValueError("; ".join(errors))
 
@@ -67,7 +68,7 @@ def validate(config: Config) -> list[str]:
 
     errors = []
 
-    def check_range(name, value, bounds, unit=""):
+    def check_range(name: str, value: float, bounds: tuple[float, float], unit: str = "") -> None:
         low, high = bounds
         if not low <= value <= high:
             errors.append(f"{name} must be between {low:g} and {high:g}{unit} (got {value:g})")
@@ -102,7 +103,8 @@ def load_config(path: Path = DEFAULT_SETTINGS_PATH) -> Config:
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
 
-    known = {f.name: f.type for f in fields(Config)}
+    # Every field is an int or a float: map each one to its converter
+    known: dict[str, Callable[[Any], Any]] = {f.name: int if f.type is int else float for f in fields(Config)}
 
     try:
         # Unknown keys are ignored instead of failing; values are coerced to the declared type

@@ -1,3 +1,4 @@
+import tkinter as tk
 from pathlib import Path
 from typing import Callable
 
@@ -23,7 +24,7 @@ class SettingsPage(ctk.CTkFrame):
     user cannot build a grid that overflows the sheet.
     """
 
-    def __init__(self, master, settings_path: Path, on_back: Callable[[], None], on_save: Callable[[Config], None]):
+    def __init__(self, master: tk.Misc, settings_path: Path, on_back: Callable[[], None], on_save: Callable[[Config], None]):
         super().__init__(master, fg_color="transparent")
         self.settings_path = settings_path
         self.on_save = on_save
@@ -65,7 +66,7 @@ class SettingsPage(ctk.CTkFrame):
         self.save_button.pack(side="right")
         ctk.CTkButton(footer, text="Restore defaults", width=150, height=40, command=lambda: self.fill(Config()), **GHOST_BUTTON).pack(side="right", padx=10)
 
-    def _section(self, parent, title: str) -> Section:
+    def _section(self, parent: tk.Misc, title: str) -> Section:
         section = Section(parent, title, padx=20)
         section.pack(fill="x", padx=20, pady=(20, 0))
         return section

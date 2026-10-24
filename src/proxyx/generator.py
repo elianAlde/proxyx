@@ -1,9 +1,12 @@
 import math
-from typing import Callable
+import os
+from typing import Callable, Sequence
 
 from PIL import Image, ImageOps
 
 from .config import Config
+
+StrPath = str | os.PathLike[str]
 
 
 def mm_to_px(mm: float, dpi: int) -> int:
@@ -29,7 +32,7 @@ def card_positions(page_size: tuple[int, int], card_size: tuple[int, int], cols:
 class ProxyGenerator:
 
     @staticmethod
-    def generate_pdf(files, output_path, config: Config, on_progress: Callable[[int, int], None] | None = None):
+    def generate_pdf(files: Sequence[StrPath], output_path: StrPath, config: Config, on_progress: Callable[[int, int], None] | None = None) -> None:
         """Render the cards into a multi-page PDF.
 
         on_progress(done, total) is called after each card and once more after saving:
@@ -61,7 +64,7 @@ class ProxyGenerator:
             on_progress(total, total)
 
 
-def fit_on_card(file, card_size: tuple[int, int]) -> Image.Image:
+def fit_on_card(file: StrPath, card_size: tuple[int, int]) -> Image.Image:
     """Scale the image to exactly fill the card, cropping the few pixels that differ in aspect ratio.
 
     Image.thumbnail() would only ever shrink: smaller sources (e.g. Scryfall's 672 px "large")

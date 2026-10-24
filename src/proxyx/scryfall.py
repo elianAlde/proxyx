@@ -1,6 +1,10 @@
 import os
+from typing import Any
 
 import requests
+
+# A card object as returned by the Scryfall API: https://scryfall.com/docs/api/cards
+Card = dict[str, Any]
 
 SCRYFALL_SEARCH_URL = "https://api.scryfall.com/cards/search"
 
@@ -17,7 +21,7 @@ HEADERS = {
 IMAGE_HEADERS = {"User-Agent": HEADERS["User-Agent"]}
 
 
-def search_cards(query, max_results=24):
+def search_cards(query: str, max_results: int = 24) -> list[Card]:
     if not query or not query.strip():
         return []
 
@@ -31,7 +35,7 @@ def search_cards(query, max_results=24):
     return response.json().get("data", [])[:max_results]
 
 
-def get_prints(card, max_results=75):
+def get_prints(card: Card, max_results: int = 75) -> list[Card]:
     uri = card.get("prints_search_uri")
 
     if not uri:
@@ -42,7 +46,7 @@ def get_prints(card, max_results=75):
     return response.json().get("data", [card])[:max_results]
 
 
-def get_image_url(card, version="normal"):
+def get_image_url(card: Card, version: str = "normal") -> str | None:
     image_uris = card.get("image_uris")
 
     # Double-faced cards have no top-level image_uris: use the front face
@@ -56,7 +60,7 @@ def get_image_url(card, version="normal"):
     return image_uris.get(version) or image_uris.get("large") or image_uris.get("normal") or image_uris.get("small")
 
 
-def fetch_image(card, version="normal", timeout=10):
+def fetch_image(card: Card, version: str = "normal", timeout: float = 10) -> bytes | None:
     """Download the card image and return its bytes, or None if the card has no image."""
 
     url = get_image_url(card, version)
@@ -69,7 +73,7 @@ def fetch_image(card, version="normal", timeout=10):
     return response.content
 
 
-def download_card_image(card, version="png"):
+def download_card_image(card: Card, version: str = "png") -> str:
     """Save the image to the disk cache (once per card) and return its path.
 
     The "png" version is 745 × 1040 px: a 63 × 88 mm card at 300 DPI, so it prints without upscaling.

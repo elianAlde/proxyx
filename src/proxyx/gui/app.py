@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
+import tkinter as tk
 from pathlib import Path
+from typing import Any, Callable, Iterable
 from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
@@ -46,13 +48,13 @@ class ProxyApp:
         self.update_info()
         self.refresh_preview()
 
-    def _build_sidebar(self, parent):
+    def _build_sidebar(self, parent: tk.Misc) -> None:
         sidebar = ctk.CTkFrame(parent, width=260, corner_radius=15)
         sidebar.pack(side="left", fill="y", padx=(0, 20))
         sidebar.pack_propagate(False)
 
         # Top to bottom it follows the workflow: add cards, check the output, generate
-        actions = [
+        actions: list[tuple[str, Callable[[], None], dict[str, Any]]] = [
             ("🔎 Search Scryfall", self.open_scryfall_search, ACCENT_BUTTON),
             ("Load Images", self.load_files, {}),
             ("Clear", self.clear_all, DANGER_OUTLINE_BUTTON),
@@ -76,7 +78,7 @@ class ProxyApp:
         self.progress_label = ctk.CTkLabel(sidebar, text="", font=font(12), text_color=MUTED, wraplength=220)
         self.progress_label.pack(side="bottom", padx=20, pady=(0, 4))
 
-    def _build_preview(self, parent):
+    def _build_preview(self, parent: tk.Misc) -> None:
         content = ctk.CTkFrame(parent, corner_radius=15)
         content.pack(side="left", fill="both", expand=True)
 
@@ -92,23 +94,23 @@ class ProxyApp:
 
     # --- Switching between app pages ---
 
-    def show_main(self):
+    def show_main(self) -> None:
         self.settings_page.pack_forget()
         self.main_page.pack(fill="both", expand=True, **PAGE_PADDING)
 
-    def show_settings(self):
+    def show_settings(self) -> None:
         self.settings_page.open(self.config)
         self.main_page.pack_forget()
         self.settings_page.pack(fill="both", expand=True, **PAGE_PADDING)
 
-    def apply_config(self, config: Config):
+    def apply_config(self, config: Config) -> None:
         self.config = config
         self.preview.columns = config.cols
         self.current_page = 0
         self.update_info()
         self.refresh_preview()
 
-    def update_info(self):
+    def update_info(self) -> None:
         c = self.config
         self.info.set("Card", f"{c.card_width_mm:g} × {c.card_height_mm:g} mm")
         self.info.set("Page", f"{c.page_width_mm:g} × {c.page_height_mm:g} mm")
@@ -117,11 +119,11 @@ class ProxyApp:
 
     # --- Loaded cards and preview ---
 
-    def load_files(self):
+    def load_files(self) -> None:
         files = filedialog.askopenfilenames(filetypes=[("Image files", "*.png *.jpg *.jpeg *.webp")])
         self.add_files(files)
 
-    def add_files(self, files, name: str | None = None):
+    def add_files(self, files: Iterable[str], name: str | None = None) -> None:
         for file in files:
             self.files.append(file)
 
@@ -130,17 +132,17 @@ class ProxyApp:
 
         self.refresh_preview()
 
-    def open_scryfall_search(self):
+    def open_scryfall_search(self) -> None:
         SearchDialog(self.root, on_add=lambda path, name: self.add_files([path], name))
 
-    def go_to_page(self, page: int):
+    def go_to_page(self, page: int) -> None:
         last_page = max(0, (len(self.files) - 1) // self.config.cards_per_page)
 
         if 0 <= page <= last_page and page != self.current_page:
             self.current_page = page
             self.refresh_preview()
 
-    def refresh_preview(self):
+    def refresh_preview(self) -> None:
         self.update_progress_label()
 
         if not self.files:
@@ -151,7 +153,7 @@ class ProxyApp:
         start = self.current_page * per_page
         self.preview.fill(self.files[start:start + per_page], self._preview_tile)
 
-    def _preview_tile(self, parent, file: str) -> CardTile:
+    def _preview_tile(self, parent: tk.Misc, file: str) -> CardTile:
         tile = CardTile(parent, self.card_names.get(file, os.path.basename(file)), image_size=PREVIEW_SIZE, wrap=180)
 
         with Image.open(file) as img:
@@ -159,17 +161,17 @@ class ProxyApp:
 
         return tile
 
-    def clear_all(self):
+    def clear_all(self) -> None:
         self.files.clear()
         self.card_names.clear()
         self.current_page = 0
         self.refresh_preview()
 
-    def update_progress_label(self):
+    def update_progress_label(self) -> None:
         pages = count_pages(len(self.files), self.config.cards_per_page)
         self.progress_label.configure(text=f"{len(self.files)} card(s) · {pages} page(s)", text_color=MUTED)
 
-    def generate_pdf(self):
+    def generate_pdf(self) -> None:
         if not self.files:
             messagebox.showerror("Error", "No images loaded.")
             return
@@ -183,11 +185,11 @@ class ProxyApp:
         self.generate_button.configure(state="disabled", text="Generating...")
         self.progress.set(0)
 
-        def on_progress(done, total):
+        def on_progress(done: int, total: int) -> None:
             # Called from the worker thread: hand the update over to the UI thread
             self.root.after(0, lambda: self.show_progress(done, total))
 
-        def on_done(_, error):
+        def on_done(_: None, error: Exception | None) -> None:
             self.generate_button.configure(state="normal", text="Generate PDF")
 
             if error:
@@ -200,10 +202,10 @@ class ProxyApp:
 
         run_in_background(self.root, lambda: ProxyGenerator.generate_pdf(files, output, config, on_progress), on_done)
 
-    def show_progress(self, done: int, total: int):
+    def show_progress(self, done: int, total: int) -> None:
         self.progress.set(done / total)
         cards = total - 1
         self.progress_label.configure(text="Saving PDF..." if done >= cards else f"Rendering card {done} of {cards}", text_color=MUTED)
 
-    def run(self):
+    def run(self) -> None:
         self.root.mainloop()

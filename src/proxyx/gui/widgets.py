@@ -1,5 +1,6 @@
 import threading
-from typing import Callable, Iterable
+import tkinter as tk
+from typing import Any, Callable, Iterable, TypeVar
 
 import customtkinter as ctk
 from PIL import Image
@@ -8,14 +9,16 @@ from .theme import MUTED, SURFACE, font
 
 THUMBNAIL_SIZE = (140, 195)
 
+T = TypeVar("T")
 
-def run_in_background(widget: ctk.CTkBaseClass, work: Callable, on_done: Callable) -> None:
+
+def run_in_background(widget: tk.Misc, work: Callable[[], T], on_done: Callable[[T | None, Exception | None], None]) -> None:
     """Run work() in a thread and call on_done(result, error) on the UI thread.
 
     Tkinter is not thread-safe: the callback goes through after() to get back on the main loop.
     """
 
-    def worker():
+    def worker() -> None:
         try:
             result, error = work(), None
         except Exception as e:
@@ -38,7 +41,7 @@ def to_ctk_image(img: Image.Image, max_size: tuple[int, int]) -> ctk.CTkImage:
 class Section(ctk.CTkFrame):
     """Panel with an uppercase title, used to group related content."""
 
-    def __init__(self, master, title: str, padx: int = 15):
+    def __init__(self, master: tk.Misc, title: str, padx: int = 15):
         super().__init__(master, corner_radius=12, fg_color=SURFACE)
         self.padx = padx
 
@@ -55,9 +58,9 @@ class Section(ctk.CTkFrame):
 class InfoPanel(Section):
     """Read-only list of key/value rows."""
 
-    def __init__(self, master, title: str, keys: Iterable[str]):
+    def __init__(self, master: tk.Misc, title: str, keys: Iterable[str]):
         super().__init__(master, title)
-        self._values = {}
+        self._values: dict[str, ctk.CTkLabel] = {}
 
         for key in keys:
             row = self.add_row()
@@ -72,7 +75,7 @@ class InfoPanel(Section):
 class CardTile(ctk.CTkFrame):
     """Card thumbnail with a title, a subtitle and a row of actions."""
 
-    def __init__(self, master, title: str, subtitle: str = "", image_size=THUMBNAIL_SIZE, wrap: int = 160):
+    def __init__(self, master: tk.Misc, title: str, subtitle: str = "", image_size: tuple[int, int] = THUMBNAIL_SIZE, wrap: int = 160):
         super().__init__(master, corner_radius=12)
         self.image_size = image_size
 
@@ -87,7 +90,7 @@ class CardTile(ctk.CTkFrame):
         # Space below the text: hosts the actions if any are added, otherwise acts as a margin
         self._footer = ctk.CTkFrame(self, height=10, fg_color="transparent")
         self._footer.pack()
-        self._actions = None
+        self._actions: ctk.CTkFrame | None = None
 
     @property
     def actions(self) -> ctk.CTkFrame:
@@ -107,7 +110,7 @@ class CardTile(ctk.CTkFrame):
 class CardGrid(ctk.CTkScrollableFrame):
     """Scrollable area that lays out its children in a fixed-column grid, centred in the available space."""
 
-    def __init__(self, master, columns: int = 3, **kwargs):
+    def __init__(self, master: tk.Misc, columns: int = 3, **kwargs: Any):
         super().__init__(master, corner_radius=10, **kwargs)
         self.columns = columns
 
@@ -123,7 +126,7 @@ class CardGrid(ctk.CTkScrollableFrame):
         self._set_column_weights(1)
         ctk.CTkLabel(self, text=text, font=font(18), text_color=MUTED).grid(row=0, column=0, padx=20, pady=50)
 
-    def fill(self, items: Iterable, build: Callable[[ctk.CTkFrame, object], ctk.CTkBaseClass]) -> None:
+    def fill(self, items: Iterable[T], build: Callable[[ctk.CTkFrame, T], tk.Widget]) -> None:
         """Clear the grid and create one widget per item with build(self, item)."""
 
         self.clear()

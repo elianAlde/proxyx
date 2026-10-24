@@ -18,5 +18,5 @@ DANGER_OUTLINE_BUTTON = {"fg_color": "transparent", "border_width": 1, "border_c
 GHOST_BUTTON = {"fg_color": "transparent", "border_width": 1, "text_color": ("gray10", "gray90")}
 
 
-def font(size: int, bold: bool = False) -> tuple:
+def font(size: int, bold: bool = False) -> tuple[str, int] | tuple[str, int, str]:
     return (FONT_FAMILY, size, "bold") if bold else (FONT_FAMILY, size)

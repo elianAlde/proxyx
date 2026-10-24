@@ -1,11 +1,12 @@
 import io
 import time
+import tkinter as tk
 from typing import Callable
 
 import customtkinter as ctk
 from PIL import Image
 
-from ..scryfall import download_card_image, fetch_image, get_prints, search_cards
+from ..scryfall import Card, download_card_image, fetch_image, get_prints, search_cards
 from .theme import GHOST_BUTTON, MUTED, font
 from .widgets import CardGrid, CardTile, run_in_background
 
@@ -21,7 +22,7 @@ class CardBrowserDialog(ctk.CTkToplevel):
     Subclasses decide how cards are fetched and how each one is shown (build_tile).
     """
 
-    def __init__(self, master, title: str, on_add: OnAdd):
+    def __init__(self, master: tk.Misc, title: str, on_add: OnAdd):
         super().__init__(master)
         self.on_add = on_add
 
@@ -40,34 +41,34 @@ class CardBrowserDialog(ctk.CTkToplevel):
         self.status = ctk.CTkLabel(self, text="", font=font(13), text_color=MUTED)
         self.status.pack(pady=(0, 15))
 
-    def show_cards(self, cards: list[dict]) -> None:
+    def show_cards(self, cards: list[Card]) -> None:
         self.grid_view.fill(enumerate(cards), lambda parent, item: self._tile(parent, *item))
 
-    def _tile(self, parent, index: int, card: dict) -> CardTile:
+    def _tile(self, parent: tk.Misc, index: int, card: Card) -> CardTile:
         tile = self.build_tile(parent, card)
         self._load_thumbnail(card, tile, delay=index * THUMBNAIL_STAGGER_S)
         return tile
 
-    def build_tile(self, parent, card: dict) -> CardTile:
+    def build_tile(self, parent: tk.Misc, card: Card) -> CardTile:
         raise NotImplementedError
 
-    def _load_thumbnail(self, card: dict, tile: CardTile, delay: float) -> None:
-        def work():
+    def _load_thumbnail(self, card: Card, tile: CardTile, delay: float) -> None:
+        def work() -> Image.Image | None:
             time.sleep(delay)
             data = fetch_image(card, version="small")
             return Image.open(io.BytesIO(data)) if data else None
 
-        def done(img, error):
+        def done(img: Image.Image | None, error: Exception | None) -> None:
             if img and tile.winfo_exists():
                 tile.set_image(img)
 
         run_in_background(self, work, done)
 
-    def add_card(self, card: dict, label: str) -> None:
+    def add_card(self, card: Card, label: str) -> None:
         self.status.configure(text=f"Downloading {label}...")
 
-        def done(path, error):
-            if error:
+        def done(path: str | None, error: Exception | None) -> None:
+            if path is None:
                 self.status.configure(text=f"Error: {error}")
                 return
 
@@ -79,7 +80,7 @@ class CardBrowserDialog(ctk.CTkToplevel):
 
 class SearchDialog(CardBrowserDialog):
 
-    def __init__(self, master, on_add: OnAdd):
+    def __init__(self, master: tk.Misc, on_add: OnAdd):
         super().__init__(master, "Search Scryfall", on_add)
 
         self.entry = ctk.CTkEntry(self.header, placeholder_text="Card name (e.g. Lightning Bolt)", height=40, font=font(14))
@@ -101,7 +102,7 @@ class SearchDialog(CardBrowserDialog):
         self.grid_view.clear()
         self.status.configure(text="Searching...")
 
-        def done(cards, error):
+        def done(cards: list[Card] | None, error: Exception | None) -> None:
             if error:
                 self.status.configure(text=f"Error: {error}")
             elif not cards:
@@ -112,7 +113,7 @@ class SearchDialog(CardBrowserDialog):
 
         run_in_background(self, lambda: search_cards(query), done)
 
-    def build_tile(self, parent, card: dict) -> CardTile:
+    def build_tile(self, parent: tk.Misc, card: Card) -> CardTile:
         name = card.get("name", "Unknown")
         tile = CardTile(parent, name, card.get("set_name", ""))
 
@@ -125,13 +126,13 @@ class SearchDialog(CardBrowserDialog):
 class VersionPicker(CardBrowserDialog):
     """Lists every printing of a card so a specific one can be picked."""
 
-    def __init__(self, master, card: dict, on_add: OnAdd):
+    def __init__(self, master: tk.Misc, card: Card, on_add: OnAdd):
         super().__init__(master, f"Versions - {card.get('name', 'Card')}", on_add)
 
         self.status.configure(text="Loading printings...")
 
-        def done(prints, error):
-            if error:
+        def done(prints: list[Card] | None, error: Exception | None) -> None:
+            if prints is None:
                 self.status.configure(text=f"Error: {error}")
                 return
 
@@ -140,7 +141,7 @@ class VersionPicker(CardBrowserDialog):
 
         run_in_background(self, lambda: get_prints(card), done)
 
-    def build_tile(self, parent, card: dict) -> CardTile:
+    def build_tile(self, parent: tk.Misc, card: Card) -> CardTile:
         set_name = card.get("set_name", "")
         details = f"#{card.get('collector_number', '?')} · {card.get('released_at', '')}"
         tile = CardTile(parent, set_name, details)
